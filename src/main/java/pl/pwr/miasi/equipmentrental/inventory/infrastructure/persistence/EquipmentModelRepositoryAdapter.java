@@ -4,6 +4,8 @@ import org.springframework.stereotype.Repository;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.out.EquipmentModelRepository;
 import pl.pwr.miasi.equipmentrental.inventory.domain.EquipmentModel;
 
+import java.util.UUID;
+
 @Repository
 public class EquipmentModelRepositoryAdapter implements EquipmentModelRepository {
 
@@ -41,5 +43,10 @@ public class EquipmentModelRepositoryAdapter implements EquipmentModelRepository
                 entity.getCategory(),
                 entity.getManufacturer()
         );
+    }
+
+    @Override
+    public boolean existsById(UUID id) {
+        return springDataRepository.existsById(id);
     }
 }

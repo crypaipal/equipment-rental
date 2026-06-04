@@ -1,0 +1,48 @@
+package pl.pwr.miasi.equipmentrental.inventory.infrastructure.persistence;
+
+import org.springframework.stereotype.Repository;
+import pl.pwr.miasi.equipmentrental.inventory.application.port.out.AssetRepository;
+import pl.pwr.miasi.equipmentrental.inventory.domain.Asset;
+import pl.pwr.miasi.equipmentrental.inventory.domain.InventoryTag;
+
+@Repository
+public class AssetRepositoryAdapter implements AssetRepository {
+
+    private final AssetSpringDataRepository springDataRepository;
+
+    public AssetRepositoryAdapter(AssetSpringDataRepository springDataRepository) {
+        this.springDataRepository = springDataRepository;
+    }
+
+    @Override
+    public Asset save(Asset asset) {
+        AssetJpaEntity entity = toEntity(asset);
+        AssetJpaEntity savedEntity = springDataRepository.save(entity);
+        return toDomain(savedEntity);
+    }
+
+    @Override
+    public boolean existsByInventoryTag(InventoryTag inventoryTag) {
+        return springDataRepository.existsByInventoryTag(inventoryTag.value());
+    }
+
+    private AssetJpaEntity toEntity(Asset asset) {
+        return new AssetJpaEntity(
+                asset.getId(),
+                asset.getEquipmentModelId(),
+                asset.getInventoryTag().value(),
+                asset.getCondition(),
+                asset.getDamageReport()
+        );
+    }
+
+    private Asset toDomain(AssetJpaEntity entity) {
+        return new Asset(
+                entity.getId(),
+                entity.getEquipmentModelId(),
+                new InventoryTag(entity.getInventoryTag()),
+                entity.getCondition(),
+                entity.getDamageReport()
+        );
+    }
+}
