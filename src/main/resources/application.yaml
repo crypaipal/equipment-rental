@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: equipment-rental
+
+server:
+  port: 8080
