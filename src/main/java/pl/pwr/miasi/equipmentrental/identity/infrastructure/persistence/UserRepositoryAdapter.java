@@ -5,6 +5,8 @@ import pl.pwr.miasi.equipmentrental.identity.application.port.out.UserRepository
 import pl.pwr.miasi.equipmentrental.identity.domain.Email;
 import pl.pwr.miasi.equipmentrental.identity.domain.User;
 
+import java.util.Optional;
+
 @Repository
 public class UserRepositoryAdapter implements UserRepository {
 
@@ -26,6 +28,12 @@ public class UserRepositoryAdapter implements UserRepository {
         return springDataRepository.existsByEmail(email.value());
     }
 
+    @Override
+    public Optional<User> findByEmail(Email email) {
+        return springDataRepository.findByEmail(email.value())
+                .map(this::toDomain);
+    }
+
     private UserJpaEntity toEntity(User user) {
         return new UserJpaEntity(
                 user.getId(),
@@ -35,7 +43,8 @@ public class UserRepositoryAdapter implements UserRepository {
                 user.getPasswordHash(),
                 user.getRole(),
                 user.getLockedUntil(),
-                user.getLockReason()
+                user.getLockReason(),
+                user.getFailedLoginAttempts()
         );
     }
 
@@ -48,7 +57,8 @@ public class UserRepositoryAdapter implements UserRepository {
                 entity.getPasswordHash(),
                 entity.getRole(),
                 entity.getLockedUntil(),
-                entity.getLockReason()
+                entity.getLockReason(),
+                entity.getFailedLoginAttempts()
         );
     }
 }

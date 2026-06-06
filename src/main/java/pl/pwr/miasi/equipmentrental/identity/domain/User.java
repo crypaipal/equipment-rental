@@ -15,6 +15,7 @@ public class User {
     private final Role role;
     private Instant lockedUntil;
     private String lockReason;
+    private int failedLoginAttempts;
 
     public User(
             UUID id,
@@ -24,7 +25,8 @@ public class User {
             String passwordHash,
             Role role,
             Instant lockedUntil,
-            String lockReason
+            String lockReason,
+            int failedLoginAttempts
     ) {
         if (id == null) {
             throw new BusinessException("User id cannot be null");
@@ -50,6 +52,10 @@ public class User {
             throw new BusinessException("Role cannot be null");
         }
 
+        if (failedLoginAttempts < 0) {
+            throw new BusinessException("Failed login attempts cannot be negative");
+        }
+
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -58,6 +64,7 @@ public class User {
         this.role = role;
         this.lockedUntil = lockedUntil;
         this.lockReason = lockReason;
+        this.failedLoginAttempts = failedLoginAttempts;
     }
 
     public static User register(
@@ -75,7 +82,8 @@ public class User {
                 passwordHash,
                 role,
                 null,
-                null
+                null,
+                0
         );
     }
 
@@ -90,6 +98,19 @@ public class User {
 
         this.lockedUntil = lockedUntil;
         this.lockReason = reason;
+    }
+
+    public void recordFailedLogin(Instant lockUntilAfterTooManyAttempts) {
+        failedLoginAttempts++;
+
+        if (failedLoginAttempts >= 3) {
+            lockAccount(lockUntilAfterTooManyAttempts, "Too many failed login attempts");
+            failedLoginAttempts = 0;
+        }
+    }
+
+    public void resetFailedLoginAttempts() {
+        failedLoginAttempts = 0;
     }
 
     public boolean isLocked() {
@@ -126,5 +147,9 @@ public class User {
 
     public String getLockReason() {
         return lockReason;
+    }
+
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
     }
 }

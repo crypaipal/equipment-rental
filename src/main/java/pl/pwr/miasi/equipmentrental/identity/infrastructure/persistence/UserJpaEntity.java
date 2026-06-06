@@ -35,6 +35,9 @@ public class UserJpaEntity {
     @Column(name = "lock_reason", length = 500)
     private String lockReason;
 
+    @Column(name = "failed_login_attempts", nullable = false)
+    private int failedLoginAttempts;
+
     protected UserJpaEntity() {
     }
 
@@ -46,7 +49,8 @@ public class UserJpaEntity {
             String passwordHash,
             Role role,
             Instant lockedUntil,
-            String lockReason
+            String lockReason,
+            int failedLoginAttempts
     ) {
         this.id = id;
         this.firstName = firstName;
@@ -56,6 +60,7 @@ public class UserJpaEntity {
         this.role = role;
         this.lockedUntil = lockedUntil;
         this.lockReason = lockReason;
+        this.failedLoginAttempts = failedLoginAttempts;
     }
 
     public UUID getId() {
@@ -88,5 +93,9 @@ public class UserJpaEntity {
 
     public String getLockReason() {
         return lockReason;
+    }
+
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
     }
 }
