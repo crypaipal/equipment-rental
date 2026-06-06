@@ -95,6 +95,15 @@ public class Reservation {
         this.status = ReservationStatus.FULFILLED;
     }
 
+    public void cancel() {
+        if (status != ReservationStatus.PENDING && status != ReservationStatus.APPROVED) {
+            throw new BusinessException("Only pending or approved reservation can be cancelled");
+        }
+
+        this.status = ReservationStatus.CANCELLED;
+        this.rejectionReason = null;
+    }
+
     public UUID getId() {
         return id;
     }
