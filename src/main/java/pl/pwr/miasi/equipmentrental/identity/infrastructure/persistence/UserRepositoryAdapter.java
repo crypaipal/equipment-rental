@@ -1,0 +1,54 @@
+package pl.pwr.miasi.equipmentrental.identity.infrastructure.persistence;
+
+import org.springframework.stereotype.Repository;
+import pl.pwr.miasi.equipmentrental.identity.application.port.out.UserRepository;
+import pl.pwr.miasi.equipmentrental.identity.domain.Email;
+import pl.pwr.miasi.equipmentrental.identity.domain.User;
+
+@Repository
+public class UserRepositoryAdapter implements UserRepository {
+
+    private final UserSpringDataRepository springDataRepository;
+
+    public UserRepositoryAdapter(UserSpringDataRepository springDataRepository) {
+        this.springDataRepository = springDataRepository;
+    }
+
+    @Override
+    public User save(User user) {
+        UserJpaEntity entity = toEntity(user);
+        UserJpaEntity savedEntity = springDataRepository.save(entity);
+        return toDomain(savedEntity);
+    }
+
+    @Override
+    public boolean existsByEmail(Email email) {
+        return springDataRepository.existsByEmail(email.value());
+    }
+
+    private UserJpaEntity toEntity(User user) {
+        return new UserJpaEntity(
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getEmail().value(),
+                user.getPasswordHash(),
+                user.getRole(),
+                user.getLockedUntil(),
+                user.getLockReason()
+        );
+    }
+
+    private User toDomain(UserJpaEntity entity) {
+        return new User(
+                entity.getId(),
+                entity.getFirstName(),
+                entity.getLastName(),
+                new Email(entity.getEmail()),
+                entity.getPasswordHash(),
+                entity.getRole(),
+                entity.getLockedUntil(),
+                entity.getLockReason()
+        );
+    }
+}
