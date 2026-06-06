@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.CheckoutEquipmentUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.RequestReservationUseCase;
+import pl.pwr.miasi.equipmentrental.rental.application.port.in.ReturnEquipmentUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.ReviewReservationUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.InventoryAssetAccessPort;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.RentalRepository;
@@ -11,6 +12,7 @@ import pl.pwr.miasi.equipmentrental.rental.application.port.out.ReservationRepos
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.UserAccessPort;
 import pl.pwr.miasi.equipmentrental.rental.application.service.CheckoutEquipmentService;
 import pl.pwr.miasi.equipmentrental.rental.application.service.RequestReservationService;
+import pl.pwr.miasi.equipmentrental.rental.application.service.ReturnEquipmentService;
 import pl.pwr.miasi.equipmentrental.rental.application.service.ReviewReservationService;
 import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
 
@@ -54,6 +56,21 @@ public class RentalUseCaseConfiguration {
                 reservationRepository,
                 rentalRepository,
                 inventoryAssetAccessPort,
+                eventPublisher
+        );
+    }
+
+    @Bean
+    public ReturnEquipmentUseCase returnEquipmentUseCase(
+            RentalRepository rentalRepository,
+            InventoryAssetAccessPort inventoryAssetAccessPort,
+            UserAccessPort userAccessPort,
+            EventPublisher eventPublisher
+    ) {
+        return new ReturnEquipmentService(
+                rentalRepository,
+                inventoryAssetAccessPort,
+                userAccessPort,
                 eventPublisher
         );
     }

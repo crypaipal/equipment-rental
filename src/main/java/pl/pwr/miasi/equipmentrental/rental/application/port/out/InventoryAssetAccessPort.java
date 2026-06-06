@@ -5,4 +5,6 @@ import java.util.UUID;
 public interface InventoryAssetAccessPort {
 
     boolean isAssetAvailableForRental(UUID assetId);
+
+    void markAssetAsDamaged(UUID assetId, String damageReport);
 }

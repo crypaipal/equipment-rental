@@ -79,6 +79,27 @@ public class Rental {
         );
     }
 
+    public void returnEquipment(Instant returnedAt) {
+        if (status != RentalStatus.ACTIVE) {
+            throw new BusinessException("Only active rental can be returned");
+        }
+
+        if (returnedAt == null) {
+            throw new BusinessException("Return date cannot be null");
+        }
+
+        if (returnedAt.isBefore(checkoutAt)) {
+            throw new BusinessException("Return date cannot be before checkout date");
+        }
+
+        this.returnedAt = returnedAt;
+        this.status = RentalStatus.CLOSED;
+    }
+
+    public boolean isOverdue() {
+        return returnedAt != null && returnedAt.isAfter(expectedReturnAt);
+    }
+
     public UUID getId() {
         return id;
     }

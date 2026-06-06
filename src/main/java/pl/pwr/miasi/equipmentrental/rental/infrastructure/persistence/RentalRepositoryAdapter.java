@@ -4,6 +4,9 @@ import org.springframework.stereotype.Repository;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.RentalRepository;
 import pl.pwr.miasi.equipmentrental.rental.domain.Rental;
 
+import java.util.Optional;
+import java.util.UUID;
+
 @Repository
 public class RentalRepositoryAdapter implements RentalRepository {
 
@@ -18,6 +21,12 @@ public class RentalRepositoryAdapter implements RentalRepository {
         RentalJpaEntity entity = toEntity(rental);
         RentalJpaEntity savedEntity = springDataRepository.save(entity);
         return toDomain(savedEntity);
+    }
+
+    @Override
+    public Optional<Rental> findById(UUID id) {
+        return springDataRepository.findById(id)
+                .map(this::toDomain);
     }
 
     private RentalJpaEntity toEntity(Rental rental) {
