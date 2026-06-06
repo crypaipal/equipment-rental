@@ -3,9 +3,14 @@ package pl.pwr.miasi.equipmentrental.inventory.application.port.out;
 import pl.pwr.miasi.equipmentrental.inventory.domain.Asset;
 import pl.pwr.miasi.equipmentrental.inventory.domain.InventoryTag;
 
+import java.util.Optional;
+import java.util.UUID;
+
 public interface AssetRepository {
 
     Asset save(Asset asset);
+
+    Optional<Asset> findById(UUID id);
 
     boolean existsByInventoryTag(InventoryTag inventoryTag);
 }

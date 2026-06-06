@@ -2,10 +2,12 @@ package pl.pwr.miasi.equipmentrental.inventory.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import pl.pwr.miasi.equipmentrental.inventory.application.port.in.ChangeAssetConditionUseCase;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.in.RegisterAssetUseCase;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.in.RegisterEquipmentModelUseCase;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.out.AssetRepository;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.out.EquipmentModelRepository;
+import pl.pwr.miasi.equipmentrental.inventory.application.service.ChangeAssetConditionService;
 import pl.pwr.miasi.equipmentrental.inventory.application.service.RegisterAssetService;
 import pl.pwr.miasi.equipmentrental.inventory.application.service.RegisterEquipmentModelService;
 import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
@@ -30,6 +32,17 @@ public class InventoryUseCaseConfiguration {
         return new RegisterAssetService(
                 assetRepository,
                 equipmentModelRepository,
+                eventPublisher
+        );
+    }
+
+    @Bean
+    public ChangeAssetConditionUseCase changeAssetConditionUseCase(
+            AssetRepository assetRepository,
+            EventPublisher eventPublisher
+    ) {
+        return new ChangeAssetConditionService(
+                assetRepository,
                 eventPublisher
         );
     }

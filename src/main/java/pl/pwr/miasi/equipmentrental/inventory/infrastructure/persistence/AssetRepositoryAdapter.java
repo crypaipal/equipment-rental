@@ -5,6 +5,9 @@ import pl.pwr.miasi.equipmentrental.inventory.application.port.out.AssetReposito
 import pl.pwr.miasi.equipmentrental.inventory.domain.Asset;
 import pl.pwr.miasi.equipmentrental.inventory.domain.InventoryTag;
 
+import java.util.Optional;
+import java.util.UUID;
+
 @Repository
 public class AssetRepositoryAdapter implements AssetRepository {
 
@@ -19,6 +22,12 @@ public class AssetRepositoryAdapter implements AssetRepository {
         AssetJpaEntity entity = toEntity(asset);
         AssetJpaEntity savedEntity = springDataRepository.save(entity);
         return toDomain(savedEntity);
+    }
+
+    @Override
+    public Optional<Asset> findById(UUID id) {
+        return springDataRepository.findById(id)
+                .map(this::toDomain);
     }
 
     @Override
