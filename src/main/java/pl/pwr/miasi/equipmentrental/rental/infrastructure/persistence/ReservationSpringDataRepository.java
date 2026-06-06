@@ -6,6 +6,7 @@ import pl.pwr.miasi.equipmentrental.rental.domain.ReservationStatus;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public interface ReservationSpringDataRepository extends JpaRepository<ReservationJpaEntity, UUID> {
@@ -20,6 +21,19 @@ public interface ReservationSpringDataRepository extends JpaRepository<Reservati
             """)
     long countOverlappingReservations(
             UUID assetId,
+            Collection<ReservationStatus> statuses,
+            Instant periodFrom,
+            Instant periodTo
+    );
+
+    @Query("""
+            select r.assetId
+            from ReservationJpaEntity r
+            where r.status in :statuses
+              and r.periodFrom < :periodTo
+              and r.periodTo > :periodFrom
+            """)
+    List<UUID> findReservedAssetIds(
             Collection<ReservationStatus> statuses,
             Instant periodFrom,
             Instant periodTo

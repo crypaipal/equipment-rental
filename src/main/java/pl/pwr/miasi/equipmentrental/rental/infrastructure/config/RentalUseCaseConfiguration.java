@@ -17,6 +17,8 @@ import pl.pwr.miasi.equipmentrental.rental.application.service.ReviewReservation
 import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.CancelReservationUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.service.CancelReservationService;
+import pl.pwr.miasi.equipmentrental.rental.application.port.in.FindAvailableEquipmentUseCase;
+import pl.pwr.miasi.equipmentrental.rental.application.service.FindAvailableEquipmentService;
 
 @Configuration
 public class RentalUseCaseConfiguration {
@@ -85,6 +87,17 @@ public class RentalUseCaseConfiguration {
         return new CancelReservationService(
                 reservationRepository,
                 eventPublisher
+        );
+    }
+
+    @Bean
+    public FindAvailableEquipmentUseCase findAvailableEquipmentUseCase(
+            InventoryAssetAccessPort inventoryAssetAccessPort,
+            ReservationRepository reservationRepository
+    ) {
+        return new FindAvailableEquipmentService(
+                inventoryAssetAccessPort,
+                reservationRepository
         );
     }
 }

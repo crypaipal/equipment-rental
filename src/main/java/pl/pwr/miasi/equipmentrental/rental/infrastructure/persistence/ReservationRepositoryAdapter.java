@@ -50,6 +50,21 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
         return count > 0;
     }
 
+    @Override
+    public List<UUID> findReservedAssetIds(RentalPeriod rentalPeriod) {
+        List<ReservationStatus> activeStatuses = List.of(
+                ReservationStatus.PENDING,
+                ReservationStatus.APPROVED,
+                ReservationStatus.FULFILLED
+        );
+
+        return springDataRepository.findReservedAssetIds(
+                activeStatuses,
+                rentalPeriod.from(),
+                rentalPeriod.to()
+        );
+    }
+
     private ReservationJpaEntity toEntity(Reservation reservation) {
         return new ReservationJpaEntity(
                 reservation.getId(),
