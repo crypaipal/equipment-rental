@@ -69,6 +69,24 @@ public class Reservation {
         );
     }
 
+    public void approve() {
+        if (status != ReservationStatus.PENDING) {
+            throw new BusinessException("Only pending reservation can be approved");
+        }
+
+        this.status = ReservationStatus.APPROVED;
+        this.rejectionReason = null;
+    }
+
+    public void reject(String reason) {
+        if (status != ReservationStatus.PENDING) {
+            throw new BusinessException("Only pending reservation can be rejected");
+        }
+
+        this.status = ReservationStatus.REJECTED;
+        this.rejectionReason = reason == null || reason.isBlank() ? null : reason;
+    }
+
     public UUID getId() {
         return id;
     }

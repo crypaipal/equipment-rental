@@ -3,10 +3,12 @@ package pl.pwr.miasi.equipmentrental.rental.infrastructure.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.RequestReservationUseCase;
+import pl.pwr.miasi.equipmentrental.rental.application.port.in.ReviewReservationUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.InventoryAssetAccessPort;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.ReservationRepository;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.UserAccessPort;
 import pl.pwr.miasi.equipmentrental.rental.application.service.RequestReservationService;
+import pl.pwr.miasi.equipmentrental.rental.application.service.ReviewReservationService;
 import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
 
 @Configuration
@@ -23,6 +25,17 @@ public class RentalUseCaseConfiguration {
                 reservationRepository,
                 userAccessPort,
                 inventoryAssetAccessPort,
+                eventPublisher
+        );
+    }
+
+    @Bean
+    public ReviewReservationUseCase reviewReservationUseCase(
+            ReservationRepository reservationRepository,
+            EventPublisher eventPublisher
+    ) {
+        return new ReviewReservationService(
+                reservationRepository,
                 eventPublisher
         );
     }

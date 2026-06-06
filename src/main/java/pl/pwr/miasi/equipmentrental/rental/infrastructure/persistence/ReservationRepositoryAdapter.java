@@ -7,6 +7,7 @@ import pl.pwr.miasi.equipmentrental.rental.domain.Reservation;
 import pl.pwr.miasi.equipmentrental.rental.domain.ReservationStatus;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -23,6 +24,12 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
         ReservationJpaEntity entity = toEntity(reservation);
         ReservationJpaEntity savedEntity = springDataRepository.save(entity);
         return toDomain(savedEntity);
+    }
+
+    @Override
+    public Optional<Reservation> findById(UUID id) {
+        return springDataRepository.findById(id)
+                .map(this::toDomain);
     }
 
     @Override
