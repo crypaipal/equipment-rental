@@ -3,10 +3,13 @@ package pl.pwr.miasi.equipmentrental.rental.infrastructure.rest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import pl.pwr.miasi.equipmentrental.rental.application.command.CheckoutEquipmentCommand;
 import pl.pwr.miasi.equipmentrental.rental.application.command.RequestReservationCommand;
 import pl.pwr.miasi.equipmentrental.rental.application.command.ReviewReservationCommand;
+import pl.pwr.miasi.equipmentrental.rental.application.port.in.CheckoutEquipmentUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.RequestReservationUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.ReviewReservationUseCase;
+import pl.pwr.miasi.equipmentrental.rental.application.result.RentalResult;
 import pl.pwr.miasi.equipmentrental.rental.application.result.ReservationResult;
 
 import java.util.UUID;
@@ -17,13 +20,16 @@ public class ReservationController {
 
     private final RequestReservationUseCase requestReservationUseCase;
     private final ReviewReservationUseCase reviewReservationUseCase;
+    private final CheckoutEquipmentUseCase checkoutEquipmentUseCase;
 
     public ReservationController(
             RequestReservationUseCase requestReservationUseCase,
-            ReviewReservationUseCase reviewReservationUseCase
+            ReviewReservationUseCase reviewReservationUseCase,
+            CheckoutEquipmentUseCase checkoutEquipmentUseCase
     ) {
         this.requestReservationUseCase = requestReservationUseCase;
         this.reviewReservationUseCase = reviewReservationUseCase;
+        this.checkoutEquipmentUseCase = checkoutEquipmentUseCase;
     }
 
     @PostMapping
@@ -38,7 +44,7 @@ public class ReservationController {
                 )
         );
 
-        return toResponse(result);
+        return toReservationResponse(result);
     }
 
     @PostMapping("/{reservationId}/approve")
@@ -51,7 +57,7 @@ public class ReservationController {
                 )
         );
 
-        return toResponse(result);
+        return toReservationResponse(result);
     }
 
     @PostMapping("/{reservationId}/reject")
@@ -69,10 +75,29 @@ public class ReservationController {
                 )
         );
 
-        return toResponse(result);
+        return toReservationResponse(result);
     }
 
-    private ReservationResponse toResponse(ReservationResult result) {
+    @PostMapping("/{reservationId}/checkout")
+    @ResponseStatus(HttpStatus.CREATED)
+    public RentalResponse checkout(@PathVariable UUID reservationId) {
+        RentalResult result = checkoutEquipmentUseCase.checkout(
+                new CheckoutEquipmentCommand(reservationId)
+        );
+
+        return new RentalResponse(
+                result.id(),
+                result.reservationId(),
+                result.userId(),
+                result.assetId(),
+                result.checkoutAt(),
+                result.expectedReturnAt(),
+                result.returnedAt(),
+                result.status()
+        );
+    }
+
+    private ReservationResponse toReservationResponse(ReservationResult result) {
         return new ReservationResponse(
                 result.id(),
                 result.userId(),

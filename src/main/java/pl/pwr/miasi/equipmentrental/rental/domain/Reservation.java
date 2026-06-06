@@ -87,6 +87,14 @@ public class Reservation {
         this.rejectionReason = reason == null || reason.isBlank() ? null : reason;
     }
 
+    public void fulfill() {
+        if (status != ReservationStatus.APPROVED) {
+            throw new BusinessException("Only approved reservation can be fulfilled");
+        }
+
+        this.status = ReservationStatus.FULFILLED;
+    }
+
     public UUID getId() {
         return id;
     }
