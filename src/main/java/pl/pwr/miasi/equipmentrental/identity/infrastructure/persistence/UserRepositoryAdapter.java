@@ -6,6 +6,7 @@ import pl.pwr.miasi.equipmentrental.identity.domain.Email;
 import pl.pwr.miasi.equipmentrental.identity.domain.User;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class UserRepositoryAdapter implements UserRepository {
@@ -31,6 +32,12 @@ public class UserRepositoryAdapter implements UserRepository {
     @Override
     public Optional<User> findByEmail(Email email) {
         return springDataRepository.findByEmail(email.value())
+                .map(this::toDomain);
+    }
+
+    @Override
+    public Optional<User> findById(UUID id) {
+        return springDataRepository.findById(id)
                 .map(this::toDomain);
     }
 

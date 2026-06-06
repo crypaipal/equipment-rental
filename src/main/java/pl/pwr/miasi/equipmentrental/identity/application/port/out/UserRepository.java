@@ -4,6 +4,7 @@ import pl.pwr.miasi.equipmentrental.identity.domain.Email;
 import pl.pwr.miasi.equipmentrental.identity.domain.User;
 
 import java.util.Optional;
+import java.util.UUID;
 
 public interface UserRepository {
 
@@ -12,4 +13,6 @@ public interface UserRepository {
     boolean existsByEmail(Email email);
 
     Optional<User> findByEmail(Email email);
+
+    Optional<User> findById(UUID id);
 }
