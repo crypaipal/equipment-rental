@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Equipment Rental System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+    <h1>Equipment Rental System</h1>
+    <p>DDD / Hexagonal Architecture project</p>
+</header>
+
+<main>
+    <section class="card">
+        <h2>Inventory Context</h2>
+
+        <h3>Register Equipment Model</h3>
+        <input id="modelName" placeholder="Model name" value="Dell XPS 13">
+        <input id="modelCategory" placeholder="Category" value="Laptop">
+        <input id="modelManufacturer" placeholder="Manufacturer" value="Dell">
+        <button onclick="registerModel()">Register model</button>
+
+        <h3>Register Asset</h3>
+        <input id="assetModelId" placeholder="Equipment model ID">
+        <input id="assetInventoryTag" placeholder="Inventory tag" value="LAP-002">
+        <button onclick="registerAsset()">Register asset</button>
+
+        <h3>Change Asset Condition</h3>
+        <input id="conditionAssetId" placeholder="Asset ID">
+        <select id="assetCondition">
+            <option value="OPERATIONAL">OPERATIONAL</option>
+            <option value="DAMAGED">DAMAGED</option>
+            <option value="IN_REPAIR">IN_REPAIR</option>
+        </select>
+        <input id="damageReport" placeholder="Damage report">
+        <button onclick="changeAssetCondition()">Change condition</button>
+    </section>
+
+    <section class="card">
+        <h2>Identity Context</h2>
+
+        <h3>Register User</h3>
+        <input id="firstName" placeholder="First name" value="Adam">
+        <input id="lastName" placeholder="Last name" value="Nowak">
+        <input id="email" placeholder="Email" value="adam.nowak@student.pwr.edu.pl">
+        <input id="password" placeholder="Password" value="password123">
+        <select id="role">
+            <option value="BORROWER">BORROWER</option>
+            <option value="LAB_ASSISTANT">LAB_ASSISTANT</option>
+            <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
+        </select>
+        <button onclick="registerUser()">Register user</button>
+
+        <h3>Login</h3>
+        <input id="loginEmail" placeholder="Email" value="adam.nowak@student.pwr.edu.pl">
+        <input id="loginPassword" placeholder="Password" value="password123">
+        <button onclick="loginUser()">Login</button>
+    </section>
+
+    <section class="card">
+        <h2>Rental Context</h2>
+
+        <h3>Find Available Assets</h3>
+        <input id="searchCategory" placeholder="Category" value="Laptop">
+        <input id="searchFrom" placeholder="Period from" value="2026-12-01T10:00:00Z">
+        <input id="searchTo" placeholder="Period to" value="2026-12-03T10:00:00Z">
+        <button onclick="findAvailableAssets()">Find available assets</button>
+
+        <h3>Request Reservation</h3>
+        <input id="reservationUserId" placeholder="User ID">
+        <input id="reservationAssetId" placeholder="Asset ID">
+        <input id="reservationFrom" placeholder="Period from" value="2026-12-10T10:00:00Z">
+        <input id="reservationTo" placeholder="Period to" value="2026-12-12T10:00:00Z">
+        <button onclick="requestReservation()">Request reservation</button>
+
+        <h3>Review Reservation</h3>
+        <input id="reviewReservationId" placeholder="Reservation ID">
+        <button onclick="approveReservation()">Approve</button>
+        <input id="rejectionReason" placeholder="Rejection reason" value="Equipment is needed for laboratory classes">
+        <button onclick="rejectReservation()">Reject</button>
+
+        <h3>Checkout / Cancel</h3>
+        <input id="checkoutReservationId" placeholder="Reservation ID">
+        <button onclick="checkoutEquipment()">Checkout equipment</button>
+        <button onclick="cancelReservation()">Cancel reservation</button>
+
+        <h3>Return Equipment</h3>
+        <input id="returnRentalId" placeholder="Rental ID">
+        <select id="returnDamaged">
+            <option value="false">Not damaged</option>
+            <option value="true">Damaged</option>
+        </select>
+        <input id="returnDamageReport" placeholder="Damage report">
+        <input id="returnedAt" placeholder="Returned at optional, e.g. 2026-12-20T10:00:00Z">
+        <button onclick="returnEquipment()">Return equipment</button>
+    </section>
+
+    <section class="card result-card">
+        <h2>Result</h2>
+        <pre id="result">Result will appear here...</pre>
+    </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
