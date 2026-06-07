@@ -65,6 +65,14 @@ public class ReservationRepositoryAdapter implements ReservationRepository {
         );
     }
 
+    @Override
+    public List<Reservation> findAll() {
+        return springDataRepository.findAll()
+                .stream()
+                .map(this::toDomain)
+                .toList();
+    }
+
     private ReservationJpaEntity toEntity(Reservation reservation) {
         return new ReservationJpaEntity(
                 reservation.getId(),

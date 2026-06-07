@@ -5,6 +5,7 @@ import pl.pwr.miasi.equipmentrental.inventory.application.port.out.EquipmentMode
 import pl.pwr.miasi.equipmentrental.inventory.domain.EquipmentModel;
 
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 public class EquipmentModelRepositoryAdapter implements EquipmentModelRepository {
@@ -48,5 +49,13 @@ public class EquipmentModelRepositoryAdapter implements EquipmentModelRepository
     @Override
     public boolean existsById(UUID id) {
         return springDataRepository.existsById(id);
+    }
+
+    @Override
+    public List<EquipmentModel> findAll() {
+        return springDataRepository.findAll()
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 }

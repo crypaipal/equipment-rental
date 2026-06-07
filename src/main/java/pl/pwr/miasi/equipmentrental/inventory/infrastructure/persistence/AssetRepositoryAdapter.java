@@ -7,6 +7,7 @@ import pl.pwr.miasi.equipmentrental.inventory.domain.InventoryTag;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 public class AssetRepositoryAdapter implements AssetRepository {
@@ -33,6 +34,14 @@ public class AssetRepositoryAdapter implements AssetRepository {
     @Override
     public boolean existsByInventoryTag(InventoryTag inventoryTag) {
         return springDataRepository.existsByInventoryTag(inventoryTag.value());
+    }
+
+    @Override
+    public List<Asset> findAll() {
+        return springDataRepository.findAll()
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     private AssetJpaEntity toEntity(Asset asset) {

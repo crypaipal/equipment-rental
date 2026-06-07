@@ -2,6 +2,7 @@ package pl.pwr.miasi.equipmentrental.inventory.application.port.out;
 
 import pl.pwr.miasi.equipmentrental.inventory.domain.EquipmentModel;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface EquipmentModelRepository {
@@ -11,4 +12,6 @@ public interface EquipmentModelRepository {
     boolean existsByNameAndManufacturer(String name, String manufacturer);
 
     boolean existsById(UUID id);
+
+    List<EquipmentModel> findAll();
 }

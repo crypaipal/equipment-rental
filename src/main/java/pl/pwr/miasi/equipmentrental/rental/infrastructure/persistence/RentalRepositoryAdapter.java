@@ -6,6 +6,7 @@ import pl.pwr.miasi.equipmentrental.rental.domain.Rental;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.List;
 
 @Repository
 public class RentalRepositoryAdapter implements RentalRepository {
@@ -27,6 +28,14 @@ public class RentalRepositoryAdapter implements RentalRepository {
     public Optional<Rental> findById(UUID id) {
         return springDataRepository.findById(id)
                 .map(this::toDomain);
+    }
+
+    @Override
+    public List<Rental> findAll() {
+        return springDataRepository.findAll()
+                .stream()
+                .map(this::toDomain)
+                .toList();
     }
 
     private RentalJpaEntity toEntity(Rental rental) {

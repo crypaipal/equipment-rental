@@ -16,4 +16,6 @@ public interface ReservationRepository {
     boolean existsActiveReservationForAsset(UUID assetId, RentalPeriod rentalPeriod);
 
     List<UUID> findReservedAssetIds(RentalPeriod rentalPeriod);
+
+    List<Reservation> findAll();
 }

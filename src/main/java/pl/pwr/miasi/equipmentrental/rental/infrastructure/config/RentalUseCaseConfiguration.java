@@ -19,6 +19,10 @@ import pl.pwr.miasi.equipmentrental.rental.application.port.in.CancelReservation
 import pl.pwr.miasi.equipmentrental.rental.application.service.CancelReservationService;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.FindAvailableEquipmentUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.service.FindAvailableEquipmentService;
+import pl.pwr.miasi.equipmentrental.rental.application.port.in.FindAllReservationsUseCase;
+import pl.pwr.miasi.equipmentrental.rental.application.service.FindAllReservationsService;
+import pl.pwr.miasi.equipmentrental.rental.application.port.in.FindAllRentalsUseCase;
+import pl.pwr.miasi.equipmentrental.rental.application.service.FindAllRentalsService;
 
 @Configuration
 public class RentalUseCaseConfiguration {
@@ -95,5 +99,19 @@ public class RentalUseCaseConfiguration {
                 inventoryAssetAccessPort,
                 reservationRepository
         );
+    }
+
+    @Bean
+    public FindAllReservationsUseCase findAllReservationsUseCase(
+            ReservationRepository reservationRepository
+    ) {
+        return new FindAllReservationsService(reservationRepository);
+    }
+
+    @Bean
+    public FindAllRentalsUseCase findAllRentalsUseCase(
+            RentalRepository rentalRepository
+    ) {
+        return new FindAllRentalsService(rentalRepository);
     }
 }

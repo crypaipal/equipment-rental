@@ -4,6 +4,9 @@ import org.springframework.web.bind.annotation.*;
 import pl.pwr.miasi.equipmentrental.rental.application.command.ReturnEquipmentCommand;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.ReturnEquipmentUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.result.RentalResult;
+import pl.pwr.miasi.equipmentrental.rental.application.port.in.FindAllRentalsUseCase;
+import java.util.List;
+import java.time.Instant;
 
 import java.util.UUID;
 
@@ -12,29 +15,25 @@ import java.util.UUID;
 public class RentalController {
 
     private final ReturnEquipmentUseCase returnEquipmentUseCase;
+    private final FindAllRentalsUseCase findAllRentalsUseCase;
 
-    public RentalController(ReturnEquipmentUseCase returnEquipmentUseCase) {
+    public RentalController(
+            ReturnEquipmentUseCase returnEquipmentUseCase,
+            FindAllRentalsUseCase findAllRentalsUseCase
+    ) {
         this.returnEquipmentUseCase = returnEquipmentUseCase;
+        this.findAllRentalsUseCase = findAllRentalsUseCase;
     }
 
-    @PostMapping("/{rentalId}/return")
-    public RentalResponse returnEquipment(
-            @PathVariable UUID rentalId,
-            @RequestBody(required = false) ReturnEquipmentRequest request
-    ) {
-        boolean damaged = request != null && Boolean.TRUE.equals(request.damaged());
-        String damageReport = request == null ? null : request.damageReport();
-        java.time.Instant returnedAt = request == null ? null : request.returnedAt();
+    @GetMapping
+    public List<RentalResponse> findAll() {
+        return findAllRentalsUseCase.findAll()
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
 
-        RentalResult result = returnEquipmentUseCase.returnEquipment(
-                new ReturnEquipmentCommand(
-                        rentalId,
-                        damaged,
-                        damageReport,
-                        returnedAt
-                )
-        );
-
+    private RentalResponse toResponse(RentalResult result) {
         return new RentalResponse(
                 result.id(),
                 result.reservationId(),
@@ -45,5 +44,26 @@ public class RentalController {
                 result.returnedAt(),
                 result.status()
         );
+    }
+
+    @PostMapping("/{rentalId}/return")
+    public RentalResponse returnEquipment(
+            @PathVariable UUID rentalId,
+            @RequestBody(required = false) ReturnEquipmentRequest request
+    ) {
+        boolean damaged = request != null && Boolean.TRUE.equals(request.damaged());
+        String damageReport = request == null ? null : request.damageReport();
+        Instant returnedAt = request == null ? null : request.returnedAt();
+
+        RentalResult result = returnEquipmentUseCase.returnEquipment(
+                new ReturnEquipmentCommand(
+                        rentalId,
+                        damaged,
+                        damageReport,
+                        returnedAt
+                )
+        );
+
+        return toResponse(result);
     }
 }

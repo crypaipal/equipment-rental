@@ -8,6 +8,8 @@ import pl.pwr.miasi.equipmentrental.inventory.application.command.RegisterAssetC
 import pl.pwr.miasi.equipmentrental.inventory.application.port.in.ChangeAssetConditionUseCase;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.in.RegisterAssetUseCase;
 import pl.pwr.miasi.equipmentrental.inventory.application.result.AssetResult;
+import pl.pwr.miasi.equipmentrental.inventory.application.port.in.FindAllAssetsUseCase;
+import java.util.List;
 
 import java.util.UUID;
 
@@ -17,13 +19,16 @@ public class AssetController {
 
     private final RegisterAssetUseCase registerAssetUseCase;
     private final ChangeAssetConditionUseCase changeAssetConditionUseCase;
+    private final FindAllAssetsUseCase findAllAssetsUseCase;
 
     public AssetController(
             RegisterAssetUseCase registerAssetUseCase,
-            ChangeAssetConditionUseCase changeAssetConditionUseCase
+            ChangeAssetConditionUseCase changeAssetConditionUseCase,
+            FindAllAssetsUseCase findAllAssetsUseCase
     ) {
         this.registerAssetUseCase = registerAssetUseCase;
         this.changeAssetConditionUseCase = changeAssetConditionUseCase;
+        this.findAllAssetsUseCase = findAllAssetsUseCase;
     }
 
     @PostMapping
@@ -53,6 +58,14 @@ public class AssetController {
         );
 
         return toResponse(result);
+    }
+
+    @GetMapping
+    public List<AssetResponse> findAll() {
+        return findAllAssetsUseCase.findAll()
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private AssetResponse toResponse(AssetResult result) {

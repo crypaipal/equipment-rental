@@ -13,6 +13,8 @@ import pl.pwr.miasi.equipmentrental.rental.application.result.RentalResult;
 import pl.pwr.miasi.equipmentrental.rental.application.result.ReservationResult;
 import pl.pwr.miasi.equipmentrental.rental.application.command.CancelReservationCommand;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.CancelReservationUseCase;
+import pl.pwr.miasi.equipmentrental.rental.application.port.in.FindAllReservationsUseCase;
+import java.util.List;
 
 import java.util.UUID;
 
@@ -24,17 +26,20 @@ public class ReservationController {
     private final ReviewReservationUseCase reviewReservationUseCase;
     private final CheckoutEquipmentUseCase checkoutEquipmentUseCase;
     private final CancelReservationUseCase cancelReservationUseCase;
+    private final FindAllReservationsUseCase findAllReservationsUseCase;
 
     public ReservationController(
             RequestReservationUseCase requestReservationUseCase,
             ReviewReservationUseCase reviewReservationUseCase,
             CheckoutEquipmentUseCase checkoutEquipmentUseCase,
-            CancelReservationUseCase cancelReservationUseCase
+            CancelReservationUseCase cancelReservationUseCase,
+            FindAllReservationsUseCase findAllReservationsUseCase
     ) {
         this.requestReservationUseCase = requestReservationUseCase;
         this.reviewReservationUseCase = reviewReservationUseCase;
         this.checkoutEquipmentUseCase = checkoutEquipmentUseCase;
         this.cancelReservationUseCase = cancelReservationUseCase;
+        this.findAllReservationsUseCase = findAllReservationsUseCase;
     }
 
     @PostMapping
@@ -109,6 +114,14 @@ public class ReservationController {
                 result.returnedAt(),
                 result.status()
         );
+    }
+
+    @GetMapping
+    public List<ReservationResponse> findAll() {
+        return findAllReservationsUseCase.findAll()
+                .stream()
+                .map(this::toReservationResponse)
+                .toList();
     }
 
     private ReservationResponse toReservationResponse(ReservationResult result) {

@@ -13,6 +13,10 @@ import pl.pwr.miasi.equipmentrental.inventory.application.service.RegisterEquipm
 import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.in.ReportAssetDamageUseCase;
 import pl.pwr.miasi.equipmentrental.inventory.application.service.ReportAssetDamageService;
+import pl.pwr.miasi.equipmentrental.inventory.application.port.in.FindAllEquipmentModelsUseCase;
+import pl.pwr.miasi.equipmentrental.inventory.application.service.FindAllEquipmentModelsService;
+import pl.pwr.miasi.equipmentrental.inventory.application.port.in.FindAllAssetsUseCase;
+import pl.pwr.miasi.equipmentrental.inventory.application.service.FindAllAssetsService;
 
 @Configuration
 public class InventoryUseCaseConfiguration {
@@ -55,5 +59,19 @@ public class InventoryUseCaseConfiguration {
             EventPublisher eventPublisher
     ) {
         return new ReportAssetDamageService(assetRepository, eventPublisher);
+    }
+
+    @Bean
+    public FindAllEquipmentModelsUseCase findAllEquipmentModelsUseCase(
+            EquipmentModelRepository equipmentModelRepository
+    ) {
+        return new FindAllEquipmentModelsService(equipmentModelRepository);
+    }
+
+    @Bean
+    public FindAllAssetsUseCase findAllAssetsUseCase(
+            AssetRepository assetRepository
+    ) {
+        return new FindAllAssetsService(assetRepository);
     }
 }
