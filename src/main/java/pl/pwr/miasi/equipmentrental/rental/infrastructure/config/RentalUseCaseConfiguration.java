@@ -65,16 +65,12 @@ public class RentalUseCaseConfiguration {
     }
 
     @Bean
-    public ReturnEquipmentUseCase returnEquipmentUseCase(
+    ReturnEquipmentUseCase returnEquipmentUseCase(
             RentalRepository rentalRepository,
-            InventoryAssetAccessPort inventoryAssetAccessPort,
-            UserAccessPort userAccessPort,
             EventPublisher eventPublisher
     ) {
         return new ReturnEquipmentService(
                 rentalRepository,
-                inventoryAssetAccessPort,
-                userAccessPort,
                 eventPublisher
         );
     }

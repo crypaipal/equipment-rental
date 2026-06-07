@@ -11,6 +11,8 @@ import pl.pwr.miasi.equipmentrental.inventory.application.service.ChangeAssetCon
 import pl.pwr.miasi.equipmentrental.inventory.application.service.RegisterAssetService;
 import pl.pwr.miasi.equipmentrental.inventory.application.service.RegisterEquipmentModelService;
 import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
+import pl.pwr.miasi.equipmentrental.inventory.application.port.in.ReportAssetDamageUseCase;
+import pl.pwr.miasi.equipmentrental.inventory.application.service.ReportAssetDamageService;
 
 @Configuration
 public class InventoryUseCaseConfiguration {
@@ -45,5 +47,13 @@ public class InventoryUseCaseConfiguration {
                 assetRepository,
                 eventPublisher
         );
+    }
+
+    @Bean
+    ReportAssetDamageUseCase reportAssetDamageUseCase(
+            AssetRepository assetRepository,
+            EventPublisher eventPublisher
+    ) {
+        return new ReportAssetDamageService(assetRepository, eventPublisher);
     }
 }

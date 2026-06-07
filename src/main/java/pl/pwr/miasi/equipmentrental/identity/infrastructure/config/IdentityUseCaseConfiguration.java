@@ -10,6 +10,9 @@ import pl.pwr.miasi.equipmentrental.identity.application.port.out.UserRepository
 import pl.pwr.miasi.equipmentrental.identity.application.service.LoginUserService;
 import pl.pwr.miasi.equipmentrental.identity.application.service.RegisterUserService;
 import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
+import pl.pwr.miasi.equipmentrental.identity.application.port.in.LockUserAccountUseCase;
+import pl.pwr.miasi.equipmentrental.identity.application.service.LockUserAccountService;
+import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
 
 @Configuration
 public class IdentityUseCaseConfiguration {
@@ -38,5 +41,13 @@ public class IdentityUseCaseConfiguration {
                 authSessionRepository,
                 passwordHasher
         );
+    }
+
+    @Bean
+    LockUserAccountUseCase lockUserAccountUseCase(
+            UserRepository userRepository,
+            EventPublisher eventPublisher
+    ) {
+        return new LockUserAccountService(userRepository, eventPublisher);
     }
 }
