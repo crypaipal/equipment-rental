@@ -1,15 +1,18 @@
 import { useState } from 'react'
+import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { registerUser } from '../api/identityApi'
 import { PageHeader } from '../components/PageHeader'
-import type { UserRole } from '../types/identity'
+import { getApiErrorMessage } from '../api/apiError'
+import type { ToastContext } from '../types/toastContext'
 
 export function RegisterPage() {
+    const { showSuccess, showError } = useOutletContext<ToastContext>()
+    const navigate = useNavigate()
+
     const [firstName, setFirstName] = useState('Test')
     const [lastName, setLastName] = useState('User')
     const [email, setEmail] = useState(`user-${Date.now()}@test.com`)
     const [password, setPassword] = useState('password123')
-    const [role, setRole] = useState<UserRole>('BORROWER')
-    const [message, setMessage] = useState<string | null>(null)
 
     async function handleSubmit(event: React.FormEvent) {
         event.preventDefault()
@@ -20,30 +23,36 @@ export function RegisterPage() {
                 lastName,
                 email,
                 password,
-                role,
+                role: 'BORROWER',
             })
 
-            setMessage(`Utworzono użytkownika: ${result.email}, ID: ${result.id}`)
-        } catch {
-            setMessage('Nie udało się utworzyć użytkownika.')
+            showSuccess(`User created: ${result.email}. You can now log in.`)
+            navigate('/login')
+        } catch (error) {
+            showError(
+                getApiErrorMessage(
+                    error,
+                    'User registration failed.',
+                ),
+            )
         }
     }
 
     return (
         <div>
             <PageHeader
-                title="Rejestracja użytkownika"
-                description="Utwórz konto studenta, pracownika obsługi albo administratora."
+                title="Create account"
+                description="Create a borrower account to reserve university equipment."
             />
 
-            <form className="form-card" onSubmit={handleSubmit}>
+            <form className="form-card auth-form" onSubmit={handleSubmit}>
                 <label>
-                    Imię
+                    First name
                     <input value={firstName} onChange={(event) => setFirstName(event.target.value)} />
                 </label>
 
                 <label>
-                    Nazwisko
+                    Last name
                     <input value={lastName} onChange={(event) => setLastName(event.target.value)} />
                 </label>
 
@@ -53,7 +62,7 @@ export function RegisterPage() {
                 </label>
 
                 <label>
-                    Hasło
+                    Password
                     <input
                         type="password"
                         value={password}
@@ -61,18 +70,11 @@ export function RegisterPage() {
                     />
                 </label>
 
-                <label>
-                    Rola
-                    <select value={role} onChange={(event) => setRole(event.target.value as UserRole)}>
-                        <option value="BORROWER">BORROWER</option>
-                        <option value="LAB_ASSISTANT">LAB_ASSISTANT</option>
-                        <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
-                    </select>
-                </label>
+                <button type="submit">Create account</button>
 
-                <button type="submit">Zarejestruj</button>
-
-                {message && <p className="form-message">{message}</p>}
+                <p className="auth-switch">
+                    Already have an account? <Link to="/login">Log in</Link>
+                </p>
             </form>
         </div>
     )

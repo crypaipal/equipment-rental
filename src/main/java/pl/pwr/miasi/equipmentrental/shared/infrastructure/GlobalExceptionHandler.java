@@ -5,6 +5,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import pl.pwr.miasi.equipmentrental.shared.exception.BusinessException;
 import pl.pwr.miasi.equipmentrental.shared.exception.NotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -32,6 +33,12 @@ public class GlobalExceptionHandler {
                 .orElse("Invalid request");
 
         return new ApiError(message);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError handleDataIntegrityViolationException(DataIntegrityViolationException exception) {
+        return new ApiError("Data integrity violation. Check unique fields.");
     }
 
     public record ApiError(String message) {

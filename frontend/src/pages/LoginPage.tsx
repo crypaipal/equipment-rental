@@ -1,42 +1,59 @@
 import { useState } from 'react'
+import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { loginUser } from '../api/identityApi'
 import { PageHeader } from '../components/PageHeader'
+import { useAuth } from '../auth/AuthContext'
+import { getApiErrorMessage } from '../api/apiError'
+import type { ToastContext } from '../types/toastContext'
 
 export function LoginPage() {
+    const { showSuccess, showError } = useOutletContext<ToastContext>()
+    const { login } = useAuth()
+    const navigate = useNavigate()
+
     const [email, setEmail] = useState('rental-test@test.com')
     const [password, setPassword] = useState('password123')
-    const [message, setMessage] = useState<string | null>(null)
 
     async function handleSubmit(event: React.FormEvent) {
         event.preventDefault()
 
         try {
             const result = await loginUser({ email, password })
-            localStorage.setItem('currentUserId', result.userId)
-            localStorage.setItem('currentUserRole', result.role)
-            localStorage.setItem('currentUserEmail', result.email)
 
-            setMessage(`Zalogowano jako ${result.email}`)
-        } catch {
-            setMessage('Nie udało się zalogować. Konto może być zablokowane albo dane są błędne.')
+            login({
+                userId: result.userId,
+                email: result.email,
+                role: result.role,
+                token: result.token,
+            })
+
+            showSuccess(`Logged in as ${result.email}.`)
+            navigate('/')
+        } catch (error) {
+            showError(
+                getApiErrorMessage(
+                    error,
+                    'Login failed. The account may be locked or credentials are invalid.',
+                ),
+            )
         }
     }
 
     return (
         <div>
             <PageHeader
-                title="Logowanie"
-                description="Zaloguj użytkownika, żeby zapisać jego identyfikator do tworzenia rezerwacji."
+                title="Login"
+                description="Sign in to access the equipment rental system."
             />
 
-            <form className="form-card" onSubmit={handleSubmit}>
+            <form className="form-card auth-form" onSubmit={handleSubmit}>
                 <label>
                     Email
                     <input value={email} onChange={(event) => setEmail(event.target.value)} />
                 </label>
 
                 <label>
-                    Hasło
+                    Password
                     <input
                         type="password"
                         value={password}
@@ -44,9 +61,11 @@ export function LoginPage() {
                     />
                 </label>
 
-                <button type="submit">Zaloguj</button>
+                <button type="submit">Log in</button>
 
-                {message && <p className="form-message">{message}</p>}
+                <p className="auth-switch">
+                    Do not have an account? <Link to="/register">Create one</Link>
+                </p>
             </form>
         </div>
     )

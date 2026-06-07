@@ -26,12 +26,12 @@ public class UserRepositoryAdapter implements UserRepository {
 
     @Override
     public boolean existsByEmail(Email email) {
-        return springDataRepository.existsByEmail(email.value());
+        return springDataRepository.existsByEmailNormalized(email.value());
     }
 
     @Override
     public Optional<User> findByEmail(Email email) {
-        return springDataRepository.findByEmail(email.value())
+        return springDataRepository.findByEmailNormalized(email.value())
                 .map(this::toDomain);
     }
 

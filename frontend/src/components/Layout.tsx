@@ -1,25 +1,72 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import {
     Boxes,
     CalendarCheck,
     ClipboardList,
     Home,
     Laptop,
-    LogIn,
-    UserPlus,
+    LogOut,
 } from 'lucide-react'
+import { ToastContainer } from './ToastContainer'
+import { useToast } from '../hooks/useToast'
+import { useAuth } from '../auth/AuthContext'
+import type { UserRole } from '../types/identity'
 
-const navItems = [
-    { to: '/', label: 'Dashboard', icon: Home },
-    { to: '/catalog', label: 'Katalog sprzętu', icon: Laptop },
-    { to: '/inventory', label: 'Administracja katalogiem', icon: Boxes },
-    { to: '/reservations', label: 'Rezerwacje', icon: ClipboardList },
-    { to: '/rentals', label: 'Wypożyczenia', icon: CalendarCheck },
-    { to: '/login', label: 'Logowanie', icon: LogIn },
-    { to: '/register', label: 'Rejestracja', icon: UserPlus },
+interface NavItem {
+    to: string
+    label: string
+    icon: typeof Home
+    roles: UserRole[]
+}
+
+const navItems: NavItem[] = [
+    {
+        to: '/',
+        label: 'Dashboard',
+        icon: Home,
+        roles: ['BORROWER', 'LAB_ASSISTANT', 'SYSTEM_ADMIN'],
+    },
+    {
+        to: '/catalog',
+        label: 'Equipment catalog',
+        icon: Laptop,
+        roles: ['BORROWER', 'LAB_ASSISTANT', 'SYSTEM_ADMIN'],
+    },
+    {
+        to: '/inventory',
+        label: 'Inventory management',
+        icon: Boxes,
+        roles: ['LAB_ASSISTANT', 'SYSTEM_ADMIN'],
+    },
+    {
+        to: '/reservations',
+        label: 'Reservations',
+        icon: ClipboardList,
+        roles: ['LAB_ASSISTANT', 'SYSTEM_ADMIN'],
+    },
+    {
+        to: '/rentals',
+        label: 'Rentals',
+        icon: CalendarCheck,
+        roles: ['LAB_ASSISTANT', 'SYSTEM_ADMIN'],
+    },
 ]
 
 export function Layout() {
+    const toast = useToast()
+    const navigate = useNavigate()
+    const { user, logout } = useAuth()
+
+    const visibleNavItems = navItems.filter((item) =>
+        user ? item.roles.includes(user.role) : false,
+    )
+
+    function handleLogout() {
+        logout()
+        toast.showSuccess('Logged out successfully.')
+        navigate('/login')
+    }
+
     return (
         <div className="app-shell">
             <aside className="sidebar">
@@ -31,8 +78,26 @@ export function Layout() {
                     </div>
                 </div>
 
+                {user && (
+                    <div className="current-user-card">
+                        <span className="current-user-label">Current user</span>
+                        <strong>{user.email}</strong>
+                        <span>{user.role}</span>
+                        <small>{user.userId.slice(0, 8)}</small>
+
+                        <button
+                            type="button"
+                            className="logout-button"
+                            onClick={handleLogout}
+                        >
+                            <LogOut size={16} />
+                            Logout
+                        </button>
+                    </div>
+                )}
+
                 <nav className="nav">
-                    {navItems.map((item) => {
+                    {visibleNavItems.map((item) => {
                         const Icon = item.icon
 
                         return (
@@ -52,8 +117,10 @@ export function Layout() {
             </aside>
 
             <main className="content">
-                <Outlet />
+                <Outlet context={toast} />
             </main>
+
+            <ToastContainer toasts={toast.toasts} onRemove={toast.removeToast} />
         </div>
     )
 }
