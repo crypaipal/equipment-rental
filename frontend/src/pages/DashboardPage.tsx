@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useOutletContext } from 'react-router-dom'
 import { getAssets, getModels } from '../api/inventoryApi'
 import { getRentals, getReservations } from '../api/rentalApi'
 import { PageHeader } from '../components/PageHeader'
+import { Link, useOutletContext } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import type { Asset, EquipmentModel } from '../types/inventory'
 import type { Rental, Reservation } from '../types/rental'
 import type { ToastContext } from '../types/toastContext'
 
 export function DashboardPage() {
     const { showError } = useOutletContext<ToastContext>()
+    const { user } = useAuth()
 
     const [models, setModels] = useState<EquipmentModel[]>([])
     const [assets, setAssets] = useState<Asset[]>([])
@@ -110,6 +112,57 @@ export function DashboardPage() {
                     <strong>{statistics.activeRentalsCount}</strong>
                 </section>
             </div>
+
+            <section className="card section-card">
+                <h3>Quick actions</h3>
+                <p className="section-description">
+                    Available actions are adjusted to the currently logged-in role.
+                </p>
+
+                <div className="quick-actions-grid">
+                    {user?.role === 'BORROWER' && (
+                        <>
+                            <Link to="/catalog" className="quick-action-card">
+                                <strong>Find equipment</strong>
+                                <span>Search available assets and create a reservation request.</span>
+                            </Link>
+
+                            <Link to="/my-reservations" className="quick-action-card">
+                                <strong>My reservations</strong>
+                                <span>Check reservation status or cancel an active request.</span>
+                            </Link>
+                        </>
+                    )}
+
+                    {user?.role === 'LAB_ASSISTANT' && (
+                        <>
+                            <Link to="/reservations" className="quick-action-card">
+                                <strong>Review reservations</strong>
+                                <span>Approve, reject or checkout approved reservation requests.</span>
+                            </Link>
+
+                            <Link to="/rentals" className="quick-action-card">
+                                <strong>Register return</strong>
+                                <span>Close rentals, report damaged returns or overdue returns.</span>
+                            </Link>
+                        </>
+                    )}
+
+                    {user?.role === 'SYSTEM_ADMIN' && (
+                        <>
+                            <Link to="/inventory" className="quick-action-card">
+                                <strong>Manage inventory</strong>
+                                <span>Create equipment models and physical assets.</span>
+                            </Link>
+
+                            <Link to="/reservations" className="quick-action-card">
+                                <strong>Operational overview</strong>
+                                <span>Control reservations and rental lifecycle from admin level.</span>
+                            </Link>
+                        </>
+                    )}
+                </div>
+            </section>
 
             <div className="dashboard-grid section-card">
                 <section className="card">

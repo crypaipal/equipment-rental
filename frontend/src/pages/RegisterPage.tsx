@@ -3,6 +3,7 @@ import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import { registerUser } from '../api/identityApi'
 import { PageHeader } from '../components/PageHeader'
 import { getApiErrorMessage } from '../api/apiError'
+import type { UserRole } from '../types/identity'
 import type { ToastContext } from '../types/toastContext'
 
 export function RegisterPage() {
@@ -13,6 +14,7 @@ export function RegisterPage() {
     const [lastName, setLastName] = useState('User')
     const [email, setEmail] = useState(`user-${Date.now()}@test.com`)
     const [password, setPassword] = useState('password123')
+    const [role, setRole] = useState<UserRole>('BORROWER')
 
     async function handleSubmit(event: React.FormEvent) {
         event.preventDefault()
@@ -23,7 +25,7 @@ export function RegisterPage() {
                 lastName,
                 email,
                 password,
-                role: 'BORROWER',
+                role,
             })
 
             showSuccess(`User created: ${result.email}. You can now log in.`)
@@ -42,7 +44,7 @@ export function RegisterPage() {
         <div>
             <PageHeader
                 title="Create account"
-                description="Create a borrower account to reserve university equipment."
+                description="Create an account and choose a role for project demonstration."
             />
 
             <form className="form-card auth-form" onSubmit={handleSubmit}>
@@ -68,6 +70,15 @@ export function RegisterPage() {
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
                     />
+                </label>
+
+                <label>
+                    Role
+                    <select value={role} onChange={(event) => setRole(event.target.value as UserRole)}>
+                        <option value="BORROWER">BORROWER</option>
+                        <option value="LAB_ASSISTANT">LAB_ASSISTANT</option>
+                        <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
+                    </select>
                 </label>
 
                 <button type="submit">Create account</button>

@@ -11,6 +11,7 @@ import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { RentalsPage } from './pages/RentalsPage'
 import { ReservationsPage } from './pages/ReservationsPage'
+import { MyReservationsPage } from './pages/MyReservationsPage'
 
 const router = createBrowserRouter([
   {
@@ -33,6 +34,12 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
           { path: '/catalog', element: <EquipmentCatalogPage /> },
+          {
+            element: <RoleRoute allowedRoles={['BORROWER']} />,
+            children: [
+              { path: '/my-reservations', element: <MyReservationsPage /> },
+            ],
+          },
           {
             element: (
                 <RoleRoute allowedRoles={['LAB_ASSISTANT', 'SYSTEM_ADMIN']} />

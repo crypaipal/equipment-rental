@@ -6,6 +6,7 @@ import {
     Home,
     Laptop,
     LogOut,
+    UserRoundCheck,
 } from 'lucide-react'
 import { ToastContainer } from './ToastContainer'
 import { useToast } from '../hooks/useToast'
@@ -31,6 +32,12 @@ const navItems: NavItem[] = [
         label: 'Equipment catalog',
         icon: Laptop,
         roles: ['BORROWER', 'LAB_ASSISTANT', 'SYSTEM_ADMIN'],
+    },
+    {
+        to: '/my-reservations',
+        label: 'My reservations',
+        icon: UserRoundCheck,
+        roles: ['BORROWER'],
     },
     {
         to: '/inventory',
