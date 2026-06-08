@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.*;
 import pl.pwr.miasi.equipmentrental.shared.exception.BusinessException;
 import pl.pwr.miasi.equipmentrental.shared.exception.NotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
+import pl.pwr.miasi.equipmentrental.shared.exception.ForbiddenException;
+import pl.pwr.miasi.equipmentrental.shared.exception.UnauthorizedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,6 +35,18 @@ public class GlobalExceptionHandler {
                 .orElse("Invalid request");
 
         return new ApiError(message);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiError handleUnauthorizedException(UnauthorizedException exception) {
+        return new ApiError(exception.getMessage());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiError handleForbiddenException(ForbiddenException exception) {
+        return new ApiError(exception.getMessage());
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

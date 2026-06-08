@@ -15,6 +15,10 @@ import pl.pwr.miasi.equipmentrental.rental.application.command.CancelReservation
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.CancelReservationUseCase;
 import pl.pwr.miasi.equipmentrental.rental.application.port.in.FindAllReservationsUseCase;
 import java.util.List;
+import pl.pwr.miasi.equipmentrental.identity.domain.Role;
+import pl.pwr.miasi.equipmentrental.identity.infrastructure.security.AuthenticatedUserResolver;
+import pl.pwr.miasi.equipmentrental.identity.infrastructure.security.RoleGuard;
+import pl.pwr.miasi.equipmentrental.shared.exception.ForbiddenException;
 
 import java.util.UUID;
 
@@ -27,24 +31,39 @@ public class ReservationController {
     private final CheckoutEquipmentUseCase checkoutEquipmentUseCase;
     private final CancelReservationUseCase cancelReservationUseCase;
     private final FindAllReservationsUseCase findAllReservationsUseCase;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
+    private final RoleGuard roleGuard;
 
     public ReservationController(
             RequestReservationUseCase requestReservationUseCase,
             ReviewReservationUseCase reviewReservationUseCase,
             CheckoutEquipmentUseCase checkoutEquipmentUseCase,
             CancelReservationUseCase cancelReservationUseCase,
-            FindAllReservationsUseCase findAllReservationsUseCase
+            FindAllReservationsUseCase findAllReservationsUseCase,
+            AuthenticatedUserResolver authenticatedUserResolver,
+            RoleGuard roleGuard
     ) {
         this.requestReservationUseCase = requestReservationUseCase;
         this.reviewReservationUseCase = reviewReservationUseCase;
         this.checkoutEquipmentUseCase = checkoutEquipmentUseCase;
         this.cancelReservationUseCase = cancelReservationUseCase;
         this.findAllReservationsUseCase = findAllReservationsUseCase;
+        this.authenticatedUserResolver = authenticatedUserResolver;
+        this.roleGuard = roleGuard;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ReservationResponse request(@Valid @RequestBody RequestReservationRequest request) {
+    public ReservationResponse request(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @Valid @RequestBody RequestReservationRequest request
+    ) {
+        var user = authenticatedUserResolver.resolve(authorizationHeader);
+        roleGuard.requireAnyRole(user, Role.BORROWER);
+
+        if (!user.userId().equals(request.userId())) {
+            throw new ForbiddenException("You can create reservations only for your own account.");
+        }
         ReservationResult result = requestReservationUseCase.request(
                 new RequestReservationCommand(
                         request.userId(),
@@ -58,7 +77,12 @@ public class ReservationController {
     }
 
     @PostMapping("/{reservationId}/approve")
-    public ReservationResponse approve(@PathVariable UUID reservationId) {
+    public ReservationResponse approve(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @PathVariable UUID reservationId
+    ) {
+        var user = authenticatedUserResolver.resolve(authorizationHeader);
+        roleGuard.requireAnyRole(user, Role.LAB_ASSISTANT, Role.SYSTEM_ADMIN);
         ReservationResult result = reviewReservationUseCase.review(
                 new ReviewReservationCommand(
                         reservationId,
@@ -72,9 +96,12 @@ public class ReservationController {
 
     @PostMapping("/{reservationId}/reject")
     public ReservationResponse reject(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
             @PathVariable UUID reservationId,
             @RequestBody(required = false) RejectReservationRequest request
     ) {
+        var user = authenticatedUserResolver.resolve(authorizationHeader);
+        roleGuard.requireAnyRole(user, Role.LAB_ASSISTANT, Role.SYSTEM_ADMIN);
         String rejectionReason = request == null ? null : request.rejectionReason();
 
         ReservationResult result = reviewReservationUseCase.review(
@@ -89,7 +116,12 @@ public class ReservationController {
     }
 
     @PostMapping("/{reservationId}/cancel")
-    public ReservationResponse cancel(@PathVariable UUID reservationId) {
+    public ReservationResponse cancel(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @PathVariable UUID reservationId
+    ) {
+        var user = authenticatedUserResolver.resolve(authorizationHeader);
+        roleGuard.requireAnyRole(user, Role.BORROWER, Role.LAB_ASSISTANT, Role.SYSTEM_ADMIN);
         ReservationResult result = cancelReservationUseCase.cancel(
                 new CancelReservationCommand(reservationId)
         );
@@ -99,7 +131,12 @@ public class ReservationController {
 
     @PostMapping("/{reservationId}/checkout")
     @ResponseStatus(HttpStatus.CREATED)
-    public RentalResponse checkout(@PathVariable UUID reservationId) {
+    public RentalResponse checkout(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader,
+            @PathVariable UUID reservationId
+    ) {
+        var user = authenticatedUserResolver.resolve(authorizationHeader);
+        roleGuard.requireAnyRole(user, Role.LAB_ASSISTANT, Role.SYSTEM_ADMIN);
         RentalResult result = checkoutEquipmentUseCase.checkout(
                 new CheckoutEquipmentCommand(reservationId)
         );
@@ -117,7 +154,11 @@ public class ReservationController {
     }
 
     @GetMapping
-    public List<ReservationResponse> findAll() {
+    public List<ReservationResponse> findAll(
+            @RequestHeader(value = "Authorization", required = false) String authorizationHeader
+    ) {
+        var user = authenticatedUserResolver.resolve(authorizationHeader);
+        roleGuard.requireAnyRole(user, Role.BORROWER, Role.LAB_ASSISTANT, Role.SYSTEM_ADMIN);
         return findAllReservationsUseCase.findAll()
                 .stream()
                 .map(this::toReservationResponse)

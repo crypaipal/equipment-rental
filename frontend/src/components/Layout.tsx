@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
     },
     {
         to: '/inventory',
-        label: 'Inventory management',
+        label: 'Inventory',
         icon: Boxes,
         roles: ['LAB_ASSISTANT', 'SYSTEM_ADMIN'],
     },

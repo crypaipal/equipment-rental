@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
+import { getApiErrorMessage } from '../api/apiError'
 import { getAssets, getModels } from '../api/inventoryApi'
 import {
     approveReservation,
@@ -11,8 +12,10 @@ import {
 import { PageHeader } from '../components/PageHeader'
 import { StatusBadge } from '../components/StatusBadge'
 import type { Asset, EquipmentModel } from '../types/inventory'
-import type { Reservation } from '../types/rental'
+import type { Reservation, ReservationStatus } from '../types/rental'
 import type { ToastContext } from '../types/toastContext'
+
+type ReservationFilter = 'ALL' | 'PENDING' | 'APPROVED' | 'CLOSED'
 
 function formatDateTime(value: string | null | undefined) {
     if (!value) {
@@ -26,6 +29,14 @@ function shortId(value: string) {
     return value.slice(0, 8)
 }
 
+function isClosedStatus(status: ReservationStatus) {
+    return (
+        status === 'REJECTED' ||
+        status === 'FULFILLED' ||
+        status === 'CANCELLED'
+    )
+}
+
 export function ReservationsPage() {
     const { showSuccess, showError } = useOutletContext<ToastContext>()
 
@@ -34,6 +45,7 @@ export function ReservationsPage() {
     const [models, setModels] = useState<EquipmentModel[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [activeActionId, setActiveActionId] = useState<string | null>(null)
+    const [filter, setFilter] = useState<ReservationFilter>('ALL')
 
     const assetById = useMemo(() => {
         return new Map(assets.map((asset) => [asset.id, asset]))
@@ -42,6 +54,32 @@ export function ReservationsPage() {
     const modelById = useMemo(() => {
         return new Map(models.map((model) => [model.id, model]))
     }, [models])
+
+    const pendingCount = reservations.filter(
+        (reservation) => reservation.status === 'PENDING',
+    ).length
+
+    const approvedCount = reservations.filter(
+        (reservation) => reservation.status === 'APPROVED',
+    ).length
+
+    const fulfilledCount = reservations.filter(
+        (reservation) => reservation.status === 'FULFILLED',
+    ).length
+
+    const filteredReservations = useMemo(() => {
+        if (filter === 'ALL') {
+            return reservations
+        }
+
+        if (filter === 'CLOSED') {
+            return reservations.filter((reservation) =>
+                isClosedStatus(reservation.status),
+            )
+        }
+
+        return reservations.filter((reservation) => reservation.status === filter)
+    }, [filter, reservations])
 
     async function loadData() {
         setIsLoading(true)
@@ -56,8 +94,8 @@ export function ReservationsPage() {
             setReservations(reservationsResult)
             setAssets(assetsResult)
             setModels(modelsResult)
-        } catch {
-            showError('Failed to load reservations.')
+        } catch (error) {
+            showError(getApiErrorMessage(error, 'Failed to load reservations.'))
         } finally {
             setIsLoading(false)
         }
@@ -72,7 +110,7 @@ export function ReservationsPage() {
         reservationId: string,
         action: () => Promise<unknown>,
         successMessage: string,
-        errorMessage: string,
+        fallbackErrorMessage: string,
     ) {
         setActiveActionId(reservationId)
 
@@ -80,8 +118,8 @@ export function ReservationsPage() {
             await action()
             showSuccess(successMessage)
             await loadData()
-        } catch {
-            showError(errorMessage)
+        } catch (error) {
+            showError(getApiErrorMessage(error, fallbackErrorMessage))
         } finally {
             setActiveActionId(null)
         }
@@ -91,13 +129,16 @@ export function ReservationsPage() {
         await runReservationAction(
             reservation.id,
             () => approveReservation(reservation.id),
-            'Reservation approved.',
+            'Reservation approved. It is ready for equipment checkout.',
             'Failed to approve reservation.',
         )
     }
 
     async function handleReject(reservation: Reservation) {
-        const reason = window.prompt('Rejection reason:', 'Not available for this period')
+        const reason = window.prompt(
+            'Rejection reason:',
+            'Equipment is not available for this period',
+        )
 
         if (!reason || reason.trim() === '') {
             showError('Rejection reason is required.')
@@ -113,7 +154,9 @@ export function ReservationsPage() {
     }
 
     async function handleCancel(reservation: Reservation) {
-        const confirmed = window.confirm('Cancel this reservation?')
+        const confirmed = window.confirm(
+            'Cancel this reservation? This should be used only before equipment checkout.',
+        )
 
         if (!confirmed) {
             return
@@ -128,10 +171,18 @@ export function ReservationsPage() {
     }
 
     async function handleCheckout(reservation: Reservation) {
+        const confirmed = window.confirm(
+            'Checkout equipment for this reservation? A new active rental will be created.',
+        )
+
+        if (!confirmed) {
+            return
+        }
+
         await runReservationAction(
             reservation.id,
             () => checkoutReservation(reservation.id),
-            'Equipment checked out. Rental has been created.',
+            'Equipment checked out. Active rental has been created.',
             'Failed to checkout equipment.',
         )
     }
@@ -156,18 +207,78 @@ export function ReservationsPage() {
         <div>
             <PageHeader
                 title="Reservations"
-                description="Review, approve, reject, cancel and checkout equipment reservations."
+                description="Review requests, approve or reject them, and checkout approved equipment."
             />
+
+            <section className="workflow-grid section-card">
+                <div className="workflow-card">
+                    <span className="workflow-step">Step 1</span>
+                    <strong>Pending requests</strong>
+                    <p>New borrower requests waiting for lab assistant decision.</p>
+                    <span className="workflow-count">{pendingCount}</span>
+                </div>
+
+                <div className="workflow-card">
+                    <span className="workflow-step">Step 2</span>
+                    <strong>Ready for checkout</strong>
+                    <p>Approved reservations that can be physically issued.</p>
+                    <span className="workflow-count">{approvedCount}</span>
+                </div>
+
+                <div className="workflow-card">
+                    <span className="workflow-step">Step 3</span>
+                    <strong>Fulfilled</strong>
+                    <p>Reservations already converted into active rentals.</p>
+                    <span className="workflow-count">{fulfilledCount}</span>
+                </div>
+            </section>
 
             <section className="card section-card">
                 <div className="section-title-row">
                     <div>
                         <h3>Reservation list</h3>
-                        <p>Manage the full reservation lifecycle before equipment checkout.</p>
+                        <p>
+                            Use this view as the lab assistant panel for reservation
+                            review and equipment checkout.
+                        </p>
                     </div>
 
                     <button type="button" onClick={loadData} disabled={isLoading}>
                         {isLoading ? 'Refreshing...' : 'Refresh'}
+                    </button>
+                </div>
+
+                <div className="filter-tabs">
+                    <button
+                        type="button"
+                        className={filter === 'ALL' ? 'active-filter-tab' : ''}
+                        onClick={() => setFilter('ALL')}
+                    >
+                        All
+                    </button>
+
+                    <button
+                        type="button"
+                        className={filter === 'PENDING' ? 'active-filter-tab' : ''}
+                        onClick={() => setFilter('PENDING')}
+                    >
+                        Pending
+                    </button>
+
+                    <button
+                        type="button"
+                        className={filter === 'APPROVED' ? 'active-filter-tab' : ''}
+                        onClick={() => setFilter('APPROVED')}
+                    >
+                        Ready for checkout
+                    </button>
+
+                    <button
+                        type="button"
+                        className={filter === 'CLOSED' ? 'active-filter-tab' : ''}
+                        onClick={() => setFilter('CLOSED')}
+                    >
+                        Closed
                     </button>
                 </div>
 
@@ -187,7 +298,7 @@ export function ReservationsPage() {
                         </thead>
 
                         <tbody>
-                        {reservations.map((reservation) => {
+                        {filteredReservations.map((reservation) => {
                             const isPending = reservation.status === 'PENDING'
                             const isApproved = reservation.status === 'APPROVED'
                             const canCancel = isPending || isApproved
@@ -236,10 +347,11 @@ export function ReservationsPage() {
                                             {isApproved && (
                                                 <button
                                                     type="button"
+                                                    className="success-button"
                                                     disabled={isBusy}
                                                     onClick={() => handleCheckout(reservation)}
                                                 >
-                                                    Checkout
+                                                    Checkout equipment
                                                 </button>
                                             )}
 
@@ -263,9 +375,9 @@ export function ReservationsPage() {
                             )
                         })}
 
-                        {reservations.length === 0 && (
+                        {filteredReservations.length === 0 && (
                             <tr>
-                                <td colSpan={8}>No reservations found.</td>
+                                <td colSpan={8}>No reservations found for this filter.</td>
                             </tr>
                         )}
                         </tbody>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useOutletContext } from 'react-router-dom'
+import { getApiErrorMessage } from '../api/apiError'
 import { getAssets, getModels } from '../api/inventoryApi'
 import { getRentals, returnRental } from '../api/rentalApi'
 import { PageHeader } from '../components/PageHeader'
@@ -7,6 +8,8 @@ import { StatusBadge } from '../components/StatusBadge'
 import type { Asset, EquipmentModel } from '../types/inventory'
 import type { Rental } from '../types/rental'
 import type { ToastContext } from '../types/toastContext'
+
+type RentalFilter = 'ALL' | 'ACTIVE' | 'CLOSED'
 
 function formatDateTime(value: string | null | undefined) {
     if (!value) {
@@ -29,6 +32,14 @@ function toIsoStringFromLocalValue(value: string) {
     return new Date(value).toISOString()
 }
 
+function isOverdue(rental: Rental) {
+    if (rental.status !== 'ACTIVE') {
+        return false
+    }
+
+    return new Date(rental.expectedReturnAt).getTime() < Date.now()
+}
+
 export function RentalsPage() {
     const { showSuccess, showError } = useOutletContext<ToastContext>()
 
@@ -37,6 +48,7 @@ export function RentalsPage() {
     const [models, setModels] = useState<EquipmentModel[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [activeActionId, setActiveActionId] = useState<string | null>(null)
+    const [filter, setFilter] = useState<RentalFilter>('ACTIVE')
 
     const assetById = useMemo(() => {
         return new Map(assets.map((asset) => [asset.id, asset]))
@@ -45,6 +57,18 @@ export function RentalsPage() {
     const modelById = useMemo(() => {
         return new Map(models.map((model) => [model.id, model]))
     }, [models])
+
+    const activeRentals = rentals.filter((rental) => rental.status === 'ACTIVE')
+    const closedRentals = rentals.filter((rental) => rental.status === 'CLOSED')
+    const overdueRentals = rentals.filter((rental) => isOverdue(rental))
+
+    const filteredRentals = useMemo(() => {
+        if (filter === 'ALL') {
+            return rentals
+        }
+
+        return rentals.filter((rental) => rental.status === filter)
+    }, [filter, rentals])
 
     async function loadData() {
         setIsLoading(true)
@@ -59,8 +83,8 @@ export function RentalsPage() {
             setRentals(rentalsResult)
             setAssets(assetsResult)
             setModels(modelsResult)
-        } catch {
-            showError('Failed to load rentals.')
+        } catch (error) {
+            showError(getApiErrorMessage(error, 'Failed to load rentals.'))
         } finally {
             setIsLoading(false)
         }
@@ -98,14 +122,18 @@ export function RentalsPage() {
             return
         }
 
+        const returnedAtIso = toIsoStringFromLocalValue(returnedAt)
+
         await runReturnAction(
             rental.id,
             {
                 damaged: false,
                 damageReport: null,
-                returnedAt: toIsoStringFromLocalValue(returnedAt),
+                returnedAt: returnedAtIso,
             },
-            'Equipment returned successfully.',
+            new Date(returnedAtIso) > new Date(rental.expectedReturnAt)
+                ? 'Equipment returned after expected time. User should be blocked by overdue policy.'
+                : 'Equipment returned successfully.',
             'Failed to return equipment.',
         )
     }
@@ -138,7 +166,7 @@ export function RentalsPage() {
                 damageReport: damageReport.trim(),
                 returnedAt: toIsoStringFromLocalValue(returnedAt),
             },
-            'Damaged equipment return registered. Asset condition should be updated through domain event.',
+            'Damaged equipment return registered. Inventory context should mark the asset as damaged.',
             'Failed to register damaged return.',
         )
     }
@@ -157,14 +185,21 @@ export function RentalsPage() {
             return
         }
 
+        const returnedAtIso = toIsoStringFromLocalValue(returnedAt)
+
+        if (new Date(returnedAtIso) <= new Date(rental.expectedReturnAt)) {
+            showError('Returned at must be after expected return date for overdue return.')
+            return
+        }
+
         await runReturnAction(
             rental.id,
             {
                 damaged: false,
                 damageReport: null,
-                returnedAt: toIsoStringFromLocalValue(returnedAt),
+                returnedAt: returnedAtIso,
             },
-            'Overdue return registered. User should be blocked through domain event.',
+            'Overdue return registered. Identity context should block the user account.',
             'Failed to register overdue return.',
         )
     }
@@ -177,7 +212,7 @@ export function RentalsPage() {
             returnedAt?: string | null
         },
         successMessage: string,
-        errorMessage: string,
+        fallbackErrorMessage: string,
     ) {
         setActiveActionId(rentalId)
 
@@ -185,8 +220,8 @@ export function RentalsPage() {
             await returnRental(rentalId, payload)
             showSuccess(successMessage)
             await loadData()
-        } catch {
-            showError(errorMessage)
+        } catch (error) {
+            showError(getApiErrorMessage(error, fallbackErrorMessage))
         } finally {
             setActiveActionId(null)
         }
@@ -196,21 +231,70 @@ export function RentalsPage() {
         <div>
             <PageHeader
                 title="Rentals"
-                description="View active and closed rentals and register equipment returns."
+                description="Register equipment returns and demonstrate damaged or overdue return policies."
             />
+
+            <section className="workflow-grid section-card">
+                <div className="workflow-card">
+                    <span className="workflow-step">Active</span>
+                    <strong>Currently borrowed</strong>
+                    <p>Equipment checked out and not returned yet.</p>
+                    <span className="workflow-count">{activeRentals.length}</span>
+                </div>
+
+                <div className="workflow-card">
+                    <span className="workflow-step">Overdue</span>
+                    <strong>After expected return</strong>
+                    <p>Returning these rentals should trigger user account block.</p>
+                    <span className="workflow-count">{overdueRentals.length}</span>
+                </div>
+
+                <div className="workflow-card">
+                    <span className="workflow-step">Closed</span>
+                    <strong>Returned equipment</strong>
+                    <p>Completed rentals after normal or exceptional return.</p>
+                    <span className="workflow-count">{closedRentals.length}</span>
+                </div>
+            </section>
 
             <section className="card section-card">
                 <div className="section-title-row">
                     <div>
                         <h3>Rental list</h3>
                         <p>
-                            Register normal returns, damaged returns and overdue returns to
-                            demonstrate domain event handling.
+                            Register normal returns, damaged returns and overdue returns
+                            from this lab assistant panel.
                         </p>
                     </div>
 
                     <button type="button" onClick={loadData} disabled={isLoading}>
                         {isLoading ? 'Refreshing...' : 'Refresh'}
+                    </button>
+                </div>
+
+                <div className="filter-tabs">
+                    <button
+                        type="button"
+                        className={filter === 'ALL' ? 'active-filter-tab' : ''}
+                        onClick={() => setFilter('ALL')}
+                    >
+                        All
+                    </button>
+
+                    <button
+                        type="button"
+                        className={filter === 'ACTIVE' ? 'active-filter-tab' : ''}
+                        onClick={() => setFilter('ACTIVE')}
+                    >
+                        Active
+                    </button>
+
+                    <button
+                        type="button"
+                        className={filter === 'CLOSED' ? 'active-filter-tab' : ''}
+                        onClick={() => setFilter('CLOSED')}
+                    >
+                        Closed
                     </button>
                 </div>
 
@@ -225,13 +309,15 @@ export function RentalsPage() {
                             <th>Expected return</th>
                             <th>Returned at</th>
                             <th>Status</th>
+                            <th>Return state</th>
                             <th>Actions</th>
                         </tr>
                         </thead>
 
                         <tbody>
-                        {rentals.map((rental) => {
-                            const isActive = rental.status === 'ACTIVE'
+                        {filteredRentals.map((rental) => {
+                            const rentalIsActive = rental.status === 'ACTIVE'
+                            const rentalIsOverdue = isOverdue(rental)
                             const isBusy = activeActionId === rental.id
 
                             return (
@@ -246,7 +332,22 @@ export function RentalsPage() {
                                         <StatusBadge value={rental.status} />
                                     </td>
                                     <td>
-                                        {isActive ? (
+                                        {rentalIsOverdue ? (
+                                            <span className="return-state overdue-state">
+                                                Overdue
+                                            </span>
+                                        ) : rentalIsActive ? (
+                                            <span className="return-state active-state">
+                                                On time
+                                            </span>
+                                        ) : (
+                                            <span className="return-state closed-state">
+                                                Closed
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td>
+                                        {rentalIsActive ? (
                                             <div className="actions">
                                                 <button
                                                     type="button"
@@ -282,9 +383,9 @@ export function RentalsPage() {
                             )
                         })}
 
-                        {rentals.length === 0 && (
+                        {filteredRentals.length === 0 && (
                             <tr>
-                                <td colSpan={8}>No rentals found.</td>
+                                <td colSpan={9}>No rentals found for this filter.</td>
                             </tr>
                         )}
                         </tbody>

@@ -7,6 +7,7 @@ import {
     getAssets,
     getModels,
 } from '../api/inventoryApi'
+import { useAuth } from '../auth/AuthContext'
 import { PageHeader } from '../components/PageHeader'
 import { StatusBadge } from '../components/StatusBadge'
 import type { Asset, AssetCondition, EquipmentModel } from '../types/inventory'
@@ -14,6 +15,11 @@ import type { ToastContext } from '../types/toastContext'
 
 export function InventoryAdminPage() {
     const { showSuccess, showError } = useOutletContext<ToastContext>()
+    const { user } = useAuth()
+
+    const canManageCatalog = user?.role === 'SYSTEM_ADMIN'
+    const canChangeAssetCondition =
+        user?.role === 'SYSTEM_ADMIN' || user?.role === 'LAB_ASSISTANT'
 
     const [models, setModels] = useState<EquipmentModel[]>([])
     const [assets, setAssets] = useState<Asset[]>([])
@@ -54,11 +60,15 @@ export function InventoryAdminPage() {
 
     useEffect(() => {
         loadInventoryData()
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     async function handleCreateModel(event: React.FormEvent) {
         event.preventDefault()
+
+        if (!canManageCatalog) {
+            showError('Only system administrator can create equipment models.')
+            return
+        }
 
         if (!modelName.trim() || !category.trim() || !manufacturer.trim()) {
             showError('Model name, category and manufacturer are required.')
@@ -87,6 +97,11 @@ export function InventoryAdminPage() {
 
     async function handleCreateAsset(event: React.FormEvent) {
         event.preventDefault()
+
+        if (!canManageCatalog) {
+            showError('Only system administrator can create physical assets.')
+            return
+        }
 
         if (!selectedModelId) {
             showError('Select an equipment model first.')
@@ -117,13 +132,33 @@ export function InventoryAdminPage() {
         assetId: string,
         condition: AssetCondition,
     ) {
-        const damageReport =
-            condition === 'DAMAGED'
-                ? window.prompt('Damage report:', 'Reported from inventory panel')
-                : null
+        if (!canChangeAssetCondition) {
+            showError('You do not have permission to change asset condition.')
+            return
+        }
 
-        if (condition === 'DAMAGED' && (!damageReport || damageReport.trim() === '')) {
-            showError('Damage report is required for DAMAGED condition.')
+        const requiresReport = condition === 'DAMAGED' || condition === 'IN_REPAIR'
+
+        const reportLabel =
+            condition === 'DAMAGED'
+                ? 'Damage report:'
+                : 'Repair note:'
+
+        const defaultReport =
+            condition === 'DAMAGED'
+                ? 'Reported as damaged from inventory panel'
+                : 'Sent to repair from inventory panel'
+
+        const damageReport = requiresReport
+            ? window.prompt(reportLabel, defaultReport)
+            : null
+
+        if (requiresReport && (!damageReport || damageReport.trim() === '')) {
+            showError(
+                condition === 'DAMAGED'
+                    ? 'Damage report is required for DAMAGED condition.'
+                    : 'Repair note is required for IN_REPAIR condition.',
+            )
             return
         }
 
@@ -133,7 +168,14 @@ export function InventoryAdminPage() {
                 damageReport: damageReport?.trim() ?? null,
             })
 
-            showSuccess('Asset condition updated.')
+            showSuccess(
+                condition === 'OPERATIONAL'
+                    ? 'Asset marked as operational.'
+                    : condition === 'IN_REPAIR'
+                        ? 'Asset sent to repair.'
+                        : 'Asset marked as damaged.',
+            )
+
             await loadInventoryData()
         } catch {
             showError('Failed to update asset condition.')
@@ -144,136 +186,171 @@ export function InventoryAdminPage() {
         <div>
             <PageHeader
                 title="Inventory management"
-                description="Manage equipment models, physical assets and technical condition."
+                description={
+                    canManageCatalog
+                        ? 'Manage equipment models, physical assets and technical condition.'
+                        : 'Review physical assets and update their technical condition.'
+                }
             />
 
-            <div className="two-column-grid">
-                <section className="card">
-                    <h3>Create equipment model</h3>
-                    <p className="section-description">
-                        Define a reusable model such as laptop, camera or laboratory device.
+            <section className="card section-card role-permission-card">
+                <h3>Role permissions</h3>
+                <p>
+                    Current role: <strong>{user?.role}</strong>
+                </p>
+
+                {canManageCatalog ? (
+                    <p>
+                        You can create equipment models, register physical assets and update
+                        technical condition.
                     </p>
-
-                    <form className="stack-form" onSubmit={handleCreateModel}>
-                        <label>
-                            Model name
-                            <input
-                                value={modelName}
-                                onChange={(event) => setModelName(event.target.value)}
-                                placeholder="e.g. Dell XPS 13"
-                            />
-                        </label>
-
-                        <label>
-                            Category
-                            <input
-                                value={category}
-                                onChange={(event) => setCategory(event.target.value)}
-                                placeholder="e.g. Laptop"
-                            />
-                        </label>
-
-                        <label>
-                            Manufacturer
-                            <input
-                                value={manufacturer}
-                                onChange={(event) => setManufacturer(event.target.value)}
-                                placeholder="e.g. Dell"
-                            />
-                        </label>
-
-                        <button type="submit">Create model</button>
-                    </form>
-                </section>
-
-                <section className="card">
-                    <h3>Create physical asset</h3>
-                    <p className="section-description">
-                        Register a concrete physical device with a unique inventory tag.
+                ) : (
+                    <p>
+                        You can update technical condition of existing assets, but catalog
+                        creation is reserved for system administrator.
                     </p>
+                )}
+            </section>
 
-                    <form className="stack-form" onSubmit={handleCreateAsset}>
-                        <label>
-                            Equipment model
-                            <select
-                                value={selectedModelId}
-                                onChange={(event) => setSelectedModelId(event.target.value)}
-                            >
-                                <option value="">Select model</option>
+            {canManageCatalog && (
+                <div className="two-column-grid">
+                    <section className="card">
+                        <h3>Create equipment model</h3>
+                        <p className="section-description">
+                            Define a reusable model such as laptop, camera or laboratory device.
+                        </p>
+
+                        <form className="stack-form" onSubmit={handleCreateModel}>
+                            <label>
+                                Model name
+                                <input
+                                    value={modelName}
+                                    onChange={(event) => setModelName(event.target.value)}
+                                    placeholder="e.g. Dell XPS 13"
+                                />
+                            </label>
+
+                            <label>
+                                Category
+                                <input
+                                    value={category}
+                                    onChange={(event) => setCategory(event.target.value)}
+                                    placeholder="e.g. Laptop"
+                                />
+                            </label>
+
+                            <label>
+                                Manufacturer
+                                <input
+                                    value={manufacturer}
+                                    onChange={(event) => setManufacturer(event.target.value)}
+                                    placeholder="e.g. Dell"
+                                />
+                            </label>
+
+                            <button type="submit">Create model</button>
+                        </form>
+                    </section>
+
+                    <section className="card">
+                        <h3>Create physical asset</h3>
+                        <p className="section-description">
+                            Register a concrete physical device with a unique inventory tag.
+                        </p>
+
+                        <form className="stack-form" onSubmit={handleCreateAsset}>
+                            <label>
+                                Equipment model
+                                <select
+                                    value={selectedModelId}
+                                    onChange={(event) => setSelectedModelId(event.target.value)}
+                                >
+                                    <option value="">Select model</option>
+                                    {models.map((model) => (
+                                        <option key={model.id} value={model.id}>
+                                            {model.manufacturer} {model.name} / {model.category}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+
+                            <label>
+                                Inventory tag
+                                <input
+                                    value={inventoryTag}
+                                    onChange={(event) => setInventoryTag(event.target.value)}
+                                    placeholder="e.g. LAP-001"
+                                />
+                            </label>
+
+                            <button type="submit">Create asset</button>
+                        </form>
+                    </section>
+                </div>
+            )}
+
+            {canManageCatalog && (
+                <section className="card section-card">
+                    <div className="section-title-row">
+                        <div>
+                            <h3>Equipment models</h3>
+                            <p>Reusable model definitions stored in the inventory catalog.</p>
+                        </div>
+
+                        <button type="button" onClick={loadInventoryData}>
+                            Refresh
+                        </button>
+                    </div>
+
+                    {isLoading ? (
+                        <p>Loading inventory data...</p>
+                    ) : (
+                        <div className="table-wrapper">
+                            <table>
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Manufacturer</th>
+                                    <th>ID</th>
+                                </tr>
+                                </thead>
+                                <tbody>
                                 {models.map((model) => (
-                                    <option key={model.id} value={model.id}>
-                                        {model.manufacturer} {model.name} / {model.category}
-                                    </option>
+                                    <tr key={model.id}>
+                                        <td>{model.name}</td>
+                                        <td>{model.category}</td>
+                                        <td>{model.manufacturer}</td>
+                                        <td className="mono">{model.id}</td>
+                                    </tr>
                                 ))}
-                            </select>
-                        </label>
 
-                        <label>
-                            Inventory tag
-                            <input
-                                value={inventoryTag}
-                                onChange={(event) => setInventoryTag(event.target.value)}
-                                placeholder="e.g. LAP-001"
-                            />
-                        </label>
-
-                        <button type="submit">Create asset</button>
-                    </form>
+                                {models.length === 0 && (
+                                    <tr>
+                                        <td colSpan={4}>No equipment models found.</td>
+                                    </tr>
+                                )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </section>
-            </div>
+            )}
 
             <section className="card section-card">
                 <div className="section-title-row">
                     <div>
-                        <h3>Equipment models</h3>
-                        <p>Reusable model definitions stored in the inventory catalog.</p>
+                        <h3>Physical assets</h3>
+                        <p>
+                            Damaged assets and assets under repair should not be available for
+                            reservation.
+                        </p>
                     </div>
 
-                    <button type="button" onClick={loadInventoryData}>
-                        Refresh
+                    <button type="button" onClick={loadInventoryData} disabled={isLoading}>
+                        {isLoading ? 'Refreshing...' : 'Refresh'}
                     </button>
                 </div>
-
-                {isLoading ? (
-                    <p>Loading inventory data...</p>
-                ) : (
-                    <div className="table-wrapper">
-                        <table>
-                            <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Manufacturer</th>
-                                <th>ID</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            {models.map((model) => (
-                                <tr key={model.id}>
-                                    <td>{model.name}</td>
-                                    <td>{model.category}</td>
-                                    <td>{model.manufacturer}</td>
-                                    <td className="mono">{model.id}</td>
-                                </tr>
-                            ))}
-
-                            {models.length === 0 && (
-                                <tr>
-                                    <td colSpan={4}>No equipment models found.</td>
-                                </tr>
-                            )}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </section>
-
-            <section className="card section-card">
-                <h3>Physical assets</h3>
-                <p className="section-description">
-                    Damaged assets and assets under repair should not be available for
-                    reservation.
-                </p>
 
                 <div className="table-wrapper">
                     <table>
@@ -310,6 +387,7 @@ export function InventoryAdminPage() {
                                             <button
                                                 type="button"
                                                 className="secondary-button"
+                                                disabled={asset.condition === 'OPERATIONAL'}
                                                 onClick={() =>
                                                     handleConditionChange(asset.id, 'OPERATIONAL')
                                                 }
@@ -320,6 +398,7 @@ export function InventoryAdminPage() {
                                             <button
                                                 type="button"
                                                 className="secondary-button"
+                                                disabled={asset.condition === 'IN_REPAIR'}
                                                 onClick={() =>
                                                     handleConditionChange(asset.id, 'IN_REPAIR')
                                                 }
@@ -330,6 +409,7 @@ export function InventoryAdminPage() {
                                             <button
                                                 type="button"
                                                 className="danger-button"
+                                                disabled={asset.condition === 'DAMAGED'}
                                                 onClick={() =>
                                                     handleConditionChange(asset.id, 'DAMAGED')
                                                 }
