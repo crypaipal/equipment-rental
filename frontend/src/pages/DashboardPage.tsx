@@ -18,6 +18,23 @@ export function DashboardPage() {
     const [rentals, setRentals] = useState<Rental[]>([])
     const [isLoading, setIsLoading] = useState(false)
 
+    const isBorrower = user?.role === 'BORROWER'
+    const isStaff = user?.role === 'LAB_ASSISTANT' || user?.role === 'SYSTEM_ADMIN'
+
+    const visibleReservations = useMemo(() => {
+        if (!user) {
+            return []
+        }
+
+        if (isBorrower) {
+            return reservations.filter(
+                (reservation) => reservation.userId === user.userId,
+            )
+        }
+
+        return reservations
+    }, [reservations, user, isBorrower])
+
     const statistics = useMemo(() => {
         return {
             modelsCount: models.length,
@@ -27,30 +44,31 @@ export function DashboardPage() {
             ).length,
             damagedAssetsCount: assets.filter((asset) => asset.condition === 'DAMAGED')
                 .length,
-            pendingReservationsCount: reservations.filter(
+            pendingReservationsCount: visibleReservations.filter(
                 (reservation) => reservation.status === 'PENDING',
             ).length,
             activeRentalsCount: rentals.filter((rental) => rental.status === 'ACTIVE')
                 .length,
         }
-    }, [models, assets, reservations, rentals])
+    }, [models, assets, visibleReservations, rentals])
 
     async function loadDashboardData() {
         setIsLoading(true)
 
         try {
-            const [modelsResult, assetsResult, reservationsResult, rentalsResult] =
-                await Promise.all([
-                    getModels(),
-                    getAssets(),
-                    getReservations(),
-                    getRentals(),
-                ])
+            const [modelsResult, assetsResult, reservationsResult] =
+                await Promise.all([getModels(), getAssets(), getReservations()])
 
             setModels(modelsResult)
             setAssets(assetsResult)
             setReservations(reservationsResult)
-            setRentals(rentalsResult)
+
+            if (isStaff) {
+                const rentalsResult = await getRentals()
+                setRentals(rentalsResult)
+            } else {
+                setRentals([])
+            }
         } catch {
             showError('Failed to load dashboard data.')
         } finally {
@@ -61,7 +79,7 @@ export function DashboardPage() {
     useEffect(() => {
         loadDashboardData()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [])
+    }, [user?.role, user?.userId])
 
     return (
         <div>
@@ -72,8 +90,12 @@ export function DashboardPage() {
 
             <div className="section-title-row">
                 <div>
-                    <h3>System overview</h3>
-                    <p>Current state of inventory, reservations and rentals.</p>
+                    <h3>{isBorrower ? 'My overview' : 'System overview'}</h3>
+                    <p>
+                        {isBorrower
+                            ? 'Your reservation summary and available equipment catalog.'
+                            : 'Current state of inventory, reservations and rentals.'}
+                    </p>
                 </div>
 
                 <button type="button" onClick={loadDashboardData} disabled={isLoading}>
@@ -103,14 +125,18 @@ export function DashboardPage() {
                 </section>
 
                 <section className="stat-card">
-                    <span>Pending reservations</span>
+                    <span>
+                        {isBorrower ? 'My pending reservations' : 'Pending reservations'}
+                    </span>
                     <strong>{statistics.pendingReservationsCount}</strong>
                 </section>
 
-                <section className="stat-card">
-                    <span>Active rentals</span>
-                    <strong>{statistics.activeRentalsCount}</strong>
-                </section>
+                {isStaff && (
+                    <section className="stat-card">
+                        <span>Active rentals</span>
+                        <strong>{statistics.activeRentalsCount}</strong>
+                    </section>
+                )}
             </div>
 
             <section className="card section-card">
@@ -172,13 +198,19 @@ export function DashboardPage() {
 
                 <section className="card">
                     <h3>Reservations</h3>
-                    <p>Create, approve, reject and cancel equipment reservations.</p>
+                    <p>
+                        {isBorrower
+                            ? 'Create and track your own equipment reservations.'
+                            : 'Create, approve, reject and cancel equipment reservations.'}
+                    </p>
                 </section>
 
-                <section className="card">
-                    <h3>Rentals</h3>
-                    <p>Handle equipment checkout and return operations.</p>
-                </section>
+                {isStaff && (
+                    <section className="card">
+                        <h3>Rentals</h3>
+                        <p>Handle equipment checkout and return operations.</p>
+                    </section>
+                )}
 
                 <section className="card">
                     <h3>DDD / EDA</h3>

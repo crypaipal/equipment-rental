@@ -13,8 +13,7 @@ public class User {
     private final Email email;
     private final String passwordHash;
     private final Role role;
-    private Instant lockedUntil;
-    private String lockReason;
+    private AccountLock accountLock;
     private int failedLoginAttempts;
 
     public User(
@@ -62,8 +61,9 @@ public class User {
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
-        this.lockedUntil = lockedUntil;
-        this.lockReason = lockReason;
+        this.accountLock = lockedUntil == null
+                ? null
+                : new AccountLock(lockedUntil, lockReason);
         this.failedLoginAttempts = failedLoginAttempts;
     }
 
@@ -88,16 +88,7 @@ public class User {
     }
 
     public void lockAccount(Instant lockedUntil, String reason) {
-        if (lockedUntil == null) {
-            throw new BusinessException("Lock expiration date cannot be null");
-        }
-
-        if (reason == null || reason.isBlank()) {
-            throw new BusinessException("Lock reason cannot be empty");
-        }
-
-        this.lockedUntil = lockedUntil;
-        this.lockReason = reason;
+        this.accountLock = new AccountLock(lockedUntil, reason);
     }
 
     public void recordFailedLogin(Instant lockUntilAfterTooManyAttempts) {
@@ -114,7 +105,7 @@ public class User {
     }
 
     public boolean isLocked() {
-        return lockedUntil != null && lockedUntil.isAfter(Instant.now());
+        return accountLock != null && accountLock.isActive(Instant.now());
     }
 
     public UUID getId() {
@@ -142,11 +133,15 @@ public class User {
     }
 
     public Instant getLockedUntil() {
-        return lockedUntil;
+        return accountLock == null ? null : accountLock.getLockedUntil();
     }
 
     public String getLockReason() {
-        return lockReason;
+        return accountLock == null ? null : accountLock.getReason();
+    }
+
+    public AccountLock getAccountLock() {
+        return accountLock;
     }
 
     public int getFailedLoginAttempts() {

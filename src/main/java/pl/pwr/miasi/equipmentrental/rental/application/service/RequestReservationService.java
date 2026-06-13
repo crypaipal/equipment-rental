@@ -6,6 +6,7 @@ import pl.pwr.miasi.equipmentrental.rental.application.port.out.InventoryAssetAc
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.ReservationRepository;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.UserAccessPort;
 import pl.pwr.miasi.equipmentrental.rental.application.result.ReservationResult;
+import pl.pwr.miasi.equipmentrental.rental.domain.RentalEligibilityRule;
 import pl.pwr.miasi.equipmentrental.rental.domain.RentalPeriod;
 import pl.pwr.miasi.equipmentrental.rental.domain.Reservation;
 import pl.pwr.miasi.equipmentrental.rental.domain.events.ReservationRequestedEvent;
@@ -35,7 +36,9 @@ public class RequestReservationService implements RequestReservationUseCase {
     public ReservationResult request(RequestReservationCommand command) {
         RentalPeriod rentalPeriod = new RentalPeriod(command.periodFrom(), command.periodTo());
 
-        if (!userAccessPort.canUserRent(command.userId())) {
+        RentalEligibilityRule rentalEligibilityRule = new RentalEligibilityRule(userAccessPort);
+
+        if (!rentalEligibilityRule.isStudentEligible(command.userId())) {
             throw new BusinessException("User is not allowed to rent equipment");
         }
 

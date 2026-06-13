@@ -11,6 +11,7 @@ import pl.pwr.miasi.equipmentrental.rental.domain.events.RentalOverdueEvent;
 import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
 import pl.pwr.miasi.equipmentrental.shared.exception.BusinessException;
 import pl.pwr.miasi.equipmentrental.shared.exception.NotFoundException;
+import pl.pwr.miasi.equipmentrental.rental.domain.OverduePolicy;
 
 import java.time.Instant;
 
@@ -53,7 +54,9 @@ public class ReturnEquipmentService implements ReturnEquipmentUseCase {
             ));
         }
 
-        if (savedRental.isOverdue()) {
+        OverduePolicy overduePolicy = new OverduePolicy();
+
+        if (overduePolicy.isReturnOverdue(savedRental)) {
             eventPublisher.publish(RentalOverdueEvent.create(
                     savedRental.getId(),
                     savedRental.getUserId(),

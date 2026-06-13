@@ -10,7 +10,7 @@ public class Asset {
     private final UUID equipmentModelId;
     private final InventoryTag inventoryTag;
     private AssetCondition condition;
-    private String damageReport;
+    private DamageReport damageReport;
 
     public Asset(UUID id, UUID equipmentModelId, InventoryTag inventoryTag, AssetCondition condition, String damageReport) {
         if (id == null) {
@@ -29,7 +29,9 @@ public class Asset {
         this.equipmentModelId = equipmentModelId;
         this.inventoryTag = inventoryTag;
         this.condition = condition == null ? AssetCondition.OPERATIONAL : condition;
-        this.damageReport = damageReport;
+        this.damageReport = damageReport == null || damageReport.isBlank()
+                ? null
+                : DamageReport.create(damageReport);
     }
 
     public static Asset register(UUID equipmentModelId, InventoryTag inventoryTag) {
@@ -42,18 +44,34 @@ public class Asset {
         );
     }
 
-    public void markAsDamaged(String damageReport) {
-        if (damageReport == null || damageReport.isBlank()) {
-            throw new BusinessException("Damage report cannot be empty when marking asset as damaged");
+    public void reportDamage(DamageReport report, AssetConditionRule rule) {
+        if (report == null) {
+            throw new BusinessException("Damage report cannot be null");
+        }
+
+        if (rule == null) {
+            throw new BusinessException("Asset condition rule cannot be null");
         }
 
         this.condition = AssetCondition.DAMAGED;
-        this.damageReport = damageReport;
+        this.damageReport = report;
+
+        if (rule.canBeAssignedToRent(this.condition)) {
+            throw new BusinessException("Damaged asset cannot be assigned to rent");
+        }
+    }
+
+    public void markAsDamaged(String damageReport) {
+        reportDamage(DamageReport.create(damageReport), new AssetConditionRule());
     }
 
     public void markAsRepaired() {
         this.condition = AssetCondition.OPERATIONAL;
         this.damageReport = null;
+    }
+
+    public void repair() {
+        markAsRepaired();
     }
 
     public void sendToRepair(String damageReport) {
@@ -62,11 +80,11 @@ public class Asset {
         }
 
         this.condition = AssetCondition.IN_REPAIR;
-        this.damageReport = damageReport;
+        this.damageReport = DamageReport.create(damageReport);
     }
 
     public boolean isAvailableForRental() {
-        return condition == AssetCondition.OPERATIONAL;
+        return new AssetConditionRule().canBeAssignedToRent(condition);
     }
 
     public UUID getId() {
@@ -86,6 +104,10 @@ public class Asset {
     }
 
     public String getDamageReport() {
+        return damageReport == null ? null : damageReport.getDescription();
+    }
+
+    public DamageReport getDamageReportDetails() {
         return damageReport;
     }
 }

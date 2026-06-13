@@ -9,8 +9,14 @@ public record InventoryTag(String value) {
             throw new BusinessException("Inventory tag cannot be empty");
         }
 
+        value = value.trim();
+
         if (value.length() < 3) {
             throw new BusinessException("Inventory tag must have at least 3 characters");
         }
+    }
+
+    public boolean isValid() {
+        return value != null && !value.isBlank() && value.length() >= 3;
     }
 }
