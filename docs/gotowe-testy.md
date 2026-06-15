@@ -8,7 +8,7 @@ Stan dokumentu: 2026-06-15.
 .\mvnw.cmd test
 ```
 
-Ostatnia weryfikacja pelnego zestawu: 52 testy, 0 bledow.
+Ostatnia weryfikacja pelnego zestawu: 68 testow, 0 bledow.
 
 ## Podsumowanie
 
@@ -28,6 +28,12 @@ Ostatnia weryfikacja pelnego zestawu: 52 testy, 0 bledow.
 | PU-08 Zmiana stanu technicznego | `ChangeAssetConditionServiceTest` | 5 | Gotowe |
 | PU-08 Zgloszenie uszkodzenia | `ReportAssetDamageServiceTest` | 2 | Gotowe |
 | PU-11 Anulowanie rezerwacji | `CancelReservationServiceTest` | 4 | Gotowe |
+| PU-12 Blokada konta | `LockUserAccountServiceTest` | 4 | Gotowe |
+| PU-12 Obsluga opoznionego zwrotu | `RentalOverdueEventHandlerTest` | 2 | Gotowe |
+| Adapter REST Identity | `IdentityControllerTest` | 2 | Gotowe |
+| Adapter REST Inventory | `AssetControllerTest` | 3 | Gotowe |
+| Adapter REST Rental | `ReservationControllerTest` | 3 | Gotowe |
+| Adapter JPA Identity | `UserRepositoryAdapterTest` | 2 | Gotowe |
 
 ## Pokryte scenariusze
 
@@ -45,10 +51,11 @@ Ostatnia weryfikacja pelnego zestawu: 52 testy, 0 bledow.
 | PU-07 RegisterAsset | Rejestracja assetu w stanie `OPERATIONAL`, trimowanie numeru inwentarzowego, publikacja `AssetRegisteredEvent`, brak modelu, duplikat inventory tag bez zapisu i bez eventu. |
 | PU-08 ChangeAssetCondition / ReportAssetDamage | Zmiana stanu na `DAMAGED`, zmiana stanu na `IN_REPAIR`, przywrocenie `OPERATIONAL`, publikacja `AssetDamagedEvent`, publikacja `AssetRepairedEvent`, zgloszenie uszkodzenia, brak assetu, walidacja pustego stanu. |
 | PU-11 CancelReservation | Anulowanie rezerwacji `PENDING`, anulowanie rezerwacji `APPROVED`, publikacja `ReservationCancelledEvent`, blokada anulowania `FULFILLED`, brak rezerwacji. |
+| PU-12 LockUserAccount | Blokada aktywnego konta, powod podany w commandzie, domyslny powod dla pustego commandu, publikacja `UserBlockedEvent`, idempotentnosc dla juz zablokowanego konta, brak uzytkownika. |
+| PU-12 RentalOverdueEventHandler | Reakcja na `RentalOverdueEvent`, przekazanie `userId` do `LockUserAccountUseCase`, staly powod blokady dla opoznionego zwrotu, deklaracja obslugiwanego typu eventu. |
+| Adaptery REST | Mapowanie requestow i odpowiedzi dla rejestracji/logowania, rejestracji assetu, zmiany stanu assetu, zlozenia rezerwacji i zatwierdzenia rezerwacji; sprawdzenie guardow roli i blokady rezerwacji na cudze konto. |
+| Adaptery JPA | Podstawowe mapowanie `UserRepositoryAdapter`: zapis domeny do encji JPA i powrot do domeny, wyszukiwanie po znormalizowanym e-mailu. |
 
-## Jeszcze niepokryte
+## Zakres zamkniety w tym etapie
 
-| PU / Obszar | Brakujace testy |
-| --- | --- |
-| PU-12 LockUserAccount | Reakcja na `RentalOverdueEvent`, idempotentnosc dla juz zablokowanego konta, publikacja `UserBlockedEvent`. |
-| Adaptery REST/JPA | Testy web slice, mapowania DTO, repozytoria i migracje. |
+Pokryto wszystkie PU z mapy oraz podstawowe adaptery REST/JPA. Glebsze testy web slice z `MockMvc` i integracyjne testy repozytoriow z migracjami Flyway wymagaja osobnej konfiguracji bazy testowej.
