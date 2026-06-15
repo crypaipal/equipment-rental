@@ -1,6 +1,6 @@
 # Gotowe testy
 
-Stan dokumentu: 2026-06-14.
+Stan dokumentu: 2026-06-15.
 
 ## Uruchamianie
 
@@ -8,7 +8,7 @@ Stan dokumentu: 2026-06-14.
 .\mvnw.cmd test
 ```
 
-Ostatnia weryfikacja pelnego zestawu: 41 testow, 0 bledow.
+Ostatnia weryfikacja pelnego zestawu: 52 testy, 0 bledow.
 
 ## Podsumowanie
 
@@ -25,6 +25,9 @@ Ostatnia weryfikacja pelnego zestawu: 41 testow, 0 bledow.
 | PU-05 Rozpatrzenie rezerwacji | `ReviewReservationServiceTest` | 3 | Gotowe |
 | PU-06 Rejestracja modelu sprzetu | `RegisterEquipmentModelServiceTest` | 2 | Gotowe |
 | PU-07 Rejestracja assetu | `RegisterAssetServiceTest` | 3 | Gotowe |
+| PU-08 Zmiana stanu technicznego | `ChangeAssetConditionServiceTest` | 5 | Gotowe |
+| PU-08 Zgloszenie uszkodzenia | `ReportAssetDamageServiceTest` | 2 | Gotowe |
+| PU-11 Anulowanie rezerwacji | `CancelReservationServiceTest` | 4 | Gotowe |
 
 ## Pokryte scenariusze
 
@@ -40,12 +43,12 @@ Ostatnia weryfikacja pelnego zestawu: 41 testow, 0 bledow.
 | PU-05 ReviewReservation | Zatwierdzenie rezerwacji, odrzucenie z powodem, publikacja `ReservationApprovedEvent`, publikacja `ReservationRejectedEvent`, brak rezerwacji. |
 | PU-06 RegisterEquipmentModel | Rejestracja modelu sprzetu, publikacja `ModelRegisteredEvent`, odrzucenie duplikatu nazwy i producenta bez zapisu i bez eventu. |
 | PU-07 RegisterAsset | Rejestracja assetu w stanie `OPERATIONAL`, trimowanie numeru inwentarzowego, publikacja `AssetRegisteredEvent`, brak modelu, duplikat inventory tag bez zapisu i bez eventu. |
+| PU-08 ChangeAssetCondition / ReportAssetDamage | Zmiana stanu na `DAMAGED`, zmiana stanu na `IN_REPAIR`, przywrocenie `OPERATIONAL`, publikacja `AssetDamagedEvent`, publikacja `AssetRepairedEvent`, zgloszenie uszkodzenia, brak assetu, walidacja pustego stanu. |
+| PU-11 CancelReservation | Anulowanie rezerwacji `PENDING`, anulowanie rezerwacji `APPROVED`, publikacja `ReservationCancelledEvent`, blokada anulowania `FULFILLED`, brak rezerwacji. |
 
 ## Jeszcze niepokryte
 
 | PU / Obszar | Brakujace testy |
 | --- | --- |
-| PU-08 ChangeAssetCondition / ReportAssetDamage | Zmiana na `DAMAGED`, `IN_REPAIR`, `OPERATIONAL`, eventy `AssetDamagedEvent` i `AssetRepairedEvent`. |
-| PU-11 CancelReservation | Anulowanie `PENDING` i `APPROVED`, blokada `FULFILLED`, publikacja `ReservationCancelledEvent`. |
 | PU-12 LockUserAccount | Reakcja na `RentalOverdueEvent`, idempotentnosc dla juz zablokowanego konta, publikacja `UserBlockedEvent`. |
 | Adaptery REST/JPA | Testy web slice, mapowania DTO, repozytoria i migracje. |
