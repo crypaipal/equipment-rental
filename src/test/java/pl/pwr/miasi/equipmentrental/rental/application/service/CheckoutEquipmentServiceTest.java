@@ -29,9 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CheckoutEquipmentServiceTest {
 
-    private static final Instant PERIOD_FROM = Instant.parse("2026-06-15T10:00:00Z");
-    private static final Instant PERIOD_TO = Instant.parse("2026-06-15T12:00:00Z");
-
     @Test
     void checksOutApprovedReservationAndPublishesEvent() {
         Reservation reservation = approvedReservation();
@@ -56,7 +53,7 @@ class CheckoutEquipmentServiceTest {
         assertThat(result.reservationId()).isEqualTo(reservation.getId());
         assertThat(result.userId()).isEqualTo(reservation.getUserId());
         assertThat(result.assetId()).isEqualTo(reservation.getAssetId());
-        assertThat(result.expectedReturnAt()).isEqualTo(PERIOD_TO);
+        assertThat(result.expectedReturnAt()).isEqualTo(reservation.getRentalPeriod().to());
         assertThat(result.returnedAt()).isNull();
         assertThat(result.status()).isEqualTo(RentalStatus.ACTIVE);
 
@@ -66,7 +63,7 @@ class CheckoutEquipmentServiceTest {
         assertThat(event.reservationId()).isEqualTo(reservation.getId());
         assertThat(event.userId()).isEqualTo(reservation.getUserId());
         assertThat(event.assetId()).isEqualTo(reservation.getAssetId());
-        assertThat(event.expectedReturnAt()).isEqualTo(PERIOD_TO);
+        assertThat(event.expectedReturnAt()).isEqualTo(reservation.getRentalPeriod().to());
     }
 
     @Test
@@ -171,10 +168,12 @@ class CheckoutEquipmentServiceTest {
     }
 
     private static Reservation pendingReservation() {
+        Instant periodFrom = Instant.now().plusSeconds(3600);
+
         return Reservation.request(
                 UUID.randomUUID(),
                 UUID.randomUUID(),
-                new RentalPeriod(PERIOD_FROM, PERIOD_TO)
+                new RentalPeriod(periodFrom, periodFrom.plusSeconds(7200))
         );
     }
 
