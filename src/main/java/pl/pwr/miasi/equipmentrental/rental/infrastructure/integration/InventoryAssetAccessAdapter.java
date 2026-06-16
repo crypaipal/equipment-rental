@@ -1,15 +1,10 @@
 package pl.pwr.miasi.equipmentrental.rental.infrastructure.integration;
 
 import org.springframework.stereotype.Component;
-import pl.pwr.miasi.equipmentrental.inventory.application.port.out.AssetRepository;
-import pl.pwr.miasi.equipmentrental.inventory.domain.Asset;
-import pl.pwr.miasi.equipmentrental.inventory.domain.AssetCondition;
-import pl.pwr.miasi.equipmentrental.inventory.domain.events.AssetDamagedEvent;
-import pl.pwr.miasi.equipmentrental.inventory.infrastructure.persistence.AssetSpringDataRepository;
+import pl.pwr.miasi.equipmentrental.inventory.application.port.in.AvailableAssetDto;
+import pl.pwr.miasi.equipmentrental.inventory.application.port.in.InventoryFacade;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.AvailableAssetView;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.InventoryAssetAccessPort;
-import pl.pwr.miasi.equipmentrental.shared.application.EventPublisher;
-import pl.pwr.miasi.equipmentrental.shared.exception.NotFoundException;
 
 import java.util.List;
 import java.util.UUID;
@@ -17,57 +12,28 @@ import java.util.UUID;
 @Component
 public class InventoryAssetAccessAdapter implements InventoryAssetAccessPort {
 
-    private final AssetRepository assetRepository;
-    private final AssetSpringDataRepository assetSpringDataRepository;
-    private final EventPublisher eventPublisher;
+    private final InventoryFacade inventoryFacade;
 
-    public InventoryAssetAccessAdapter(
-            AssetRepository assetRepository,
-            AssetSpringDataRepository assetSpringDataRepository,
-            EventPublisher eventPublisher
-    ) {
-        this.assetRepository = assetRepository;
-        this.assetSpringDataRepository = assetSpringDataRepository;
-        this.eventPublisher = eventPublisher;
+    public InventoryAssetAccessAdapter(InventoryFacade inventoryFacade) {
+        this.inventoryFacade = inventoryFacade;
     }
 
     @Override
     public boolean isAssetAvailableForRental(UUID assetId) {
-        return assetRepository.findById(assetId)
-                .map(Asset::isAvailableForRental)
-                .orElse(false);
-    }
-
-    @Override
-    public void markAssetAsDamaged(UUID assetId, String damageReport) {
-        Asset asset = assetRepository.findById(assetId)
-                .orElseThrow(() -> new NotFoundException("Asset not found"));
-
-        asset.markAsDamaged(damageReport);
-        Asset savedAsset = assetRepository.save(asset);
-
-        eventPublisher.publish(AssetDamagedEvent.create(
-                savedAsset.getId(),
-                savedAsset.getInventoryTag().value(),
-                savedAsset.getCondition(),
-                savedAsset.getDamageReport()
-        ));
+        return inventoryFacade.isAssetOperational(assetId);
     }
 
     @Override
     public List<AvailableAssetView> findAvailableAssetsByCategory(String category) {
-        return assetSpringDataRepository.findOperationalAssetsByCategory(
-                        category,
-                        AssetCondition.OPERATIONAL
-                )
+        return inventoryFacade.findAvailableAssetsByCategory(category)
                 .stream()
-                .map(asset -> new AvailableAssetView(
-                        asset.assetId(),
-                        asset.equipmentModelId(),
-                        asset.inventoryTag(),
-                        asset.modelName(),
-                        asset.category(),
-                        asset.manufacturer()
+                .map(dto -> new AvailableAssetView(
+                        dto.assetId(),
+                        dto.equipmentModelId(),
+                        dto.inventoryTag(),
+                        dto.modelName(),
+                        dto.category(),
+                        dto.manufacturer()
                 ))
                 .toList();
     }

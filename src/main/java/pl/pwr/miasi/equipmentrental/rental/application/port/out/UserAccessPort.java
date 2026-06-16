@@ -6,5 +6,4 @@ public interface UserAccessPort {
 
     boolean canUserRent(UUID userId);
 
-    void blockUserDueToOverdue(UUID userId, String reason);
 }

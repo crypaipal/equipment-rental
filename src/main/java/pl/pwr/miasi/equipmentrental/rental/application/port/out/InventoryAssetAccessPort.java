@@ -7,7 +7,5 @@ public interface InventoryAssetAccessPort {
 
     boolean isAssetAvailableForRental(UUID assetId);
 
-    void markAssetAsDamaged(UUID assetId, String damageReport);
-
     List<AvailableAssetView> findAvailableAssetsByCategory(String category);
 }
