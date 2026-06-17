@@ -1,5 +1,6 @@
 package pl.pwr.miasi.equipmentrental.inventory.application.port.out;
 
+import pl.pwr.miasi.equipmentrental.inventory.application.dto.AvailableAssetDto;
 import pl.pwr.miasi.equipmentrental.inventory.domain.Asset;
 import pl.pwr.miasi.equipmentrental.inventory.domain.InventoryTag;
 
@@ -16,4 +17,5 @@ public interface AssetRepository {
     boolean existsByInventoryTag(InventoryTag inventoryTag);
 
     List<Asset> findAll();
+    List<AvailableAssetDto> findOperationalByCategory(String category);
 }

@@ -252,9 +252,6 @@ class CheckoutEquipmentServiceTest {
             return assetAvailable;
         }
 
-        @Override
-        public void markAssetAsDamaged(UUID assetId, String damageReport) {
-        }
 
         @Override
         public List<AvailableAssetView> findAvailableAssetsByCategory(String category) {

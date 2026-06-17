@@ -1,7 +1,6 @@
 package pl.pwr.miasi.equipmentrental.rental.infrastructure.integration;
 
 import org.springframework.stereotype.Component;
-import pl.pwr.miasi.equipmentrental.inventory.application.port.in.AvailableAssetDto;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.in.InventoryFacade;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.AvailableAssetView;
 import pl.pwr.miasi.equipmentrental.rental.application.port.out.InventoryAssetAccessPort;

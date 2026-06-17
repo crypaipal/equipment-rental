@@ -2,6 +2,7 @@ package pl.pwr.miasi.equipmentrental.inventory.application.service;
 
 import org.junit.jupiter.api.Test;
 import pl.pwr.miasi.equipmentrental.inventory.application.command.RegisterAssetCommand;
+import pl.pwr.miasi.equipmentrental.inventory.application.dto.AvailableAssetDto;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.out.AssetRepository;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.out.EquipmentModelRepository;
 import pl.pwr.miasi.equipmentrental.inventory.application.result.AssetResult;
@@ -15,10 +16,7 @@ import pl.pwr.miasi.equipmentrental.shared.domain.DomainEvent;
 import pl.pwr.miasi.equipmentrental.shared.exception.BusinessException;
 import pl.pwr.miasi.equipmentrental.shared.exception.NotFoundException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -117,6 +115,13 @@ class RegisterAssetServiceTest {
         public List<Asset> findAll() {
             return List.of();
         }
+
+        @Override
+        public List<AvailableAssetDto> findOperationalByCategory(String category) {
+            return Collections.emptyList();
+        }
+
+
     }
 
     private static class FakeEquipmentModelRepository implements EquipmentModelRepository {

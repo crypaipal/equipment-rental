@@ -1,4 +1,4 @@
-package pl.pwr.miasi.equipmentrental.inventory.application.port.in;
+package pl.pwr.miasi.equipmentrental.inventory.application.dto;
 
 import java.util.UUID;
 

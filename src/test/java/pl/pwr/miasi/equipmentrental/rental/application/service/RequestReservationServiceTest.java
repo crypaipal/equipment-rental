@@ -186,9 +186,6 @@ class RequestReservationServiceTest {
             return canRent;
         }
 
-        @Override
-        public void blockUserDueToOverdue(UUID userId, String reason) {
-        }
     }
 
     private static class FakeInventoryAssetAccessPort implements InventoryAssetAccessPort {
@@ -201,10 +198,6 @@ class RequestReservationServiceTest {
         @Override
         public boolean isAssetAvailableForRental(UUID assetId) {
             return assetAvailable;
-        }
-
-        @Override
-        public void markAssetAsDamaged(UUID assetId, String damageReport) {
         }
 
         @Override

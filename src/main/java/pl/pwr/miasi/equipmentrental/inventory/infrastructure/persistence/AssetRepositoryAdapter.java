@@ -1,8 +1,10 @@
 package pl.pwr.miasi.equipmentrental.inventory.infrastructure.persistence;
 
 import org.springframework.stereotype.Repository;
+import pl.pwr.miasi.equipmentrental.inventory.application.dto.AvailableAssetDto;
 import pl.pwr.miasi.equipmentrental.inventory.application.port.out.AssetRepository;
 import pl.pwr.miasi.equipmentrental.inventory.domain.Asset;
+import pl.pwr.miasi.equipmentrental.inventory.domain.AssetCondition;
 import pl.pwr.miasi.equipmentrental.inventory.domain.InventoryTag;
 
 import java.util.Optional;
@@ -62,5 +64,20 @@ public class AssetRepositoryAdapter implements AssetRepository {
                 entity.getCondition(),
                 entity.getDamageReport()
         );
+    }
+
+    @Override
+    public List<AvailableAssetDto> findOperationalByCategory(String category) {
+        return springDataRepository.findOperationalAssetsByCategory(category, AssetCondition.OPERATIONAL)
+                .stream()
+                .map(view -> new AvailableAssetDto(
+                        view.assetId(),
+                        view.equipmentModelId(),
+                        view.inventoryTag(),
+                        view.modelName(),
+                        view.category(),
+                        view.manufacturer()
+                ))
+                .toList();
     }
 }

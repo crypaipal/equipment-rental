@@ -125,9 +125,7 @@ class FindAvailableEquipmentServiceTest {
             return false;
         }
 
-        @Override
-        public void markAssetAsDamaged(UUID assetId, String damageReport) {
-        }
+
 
         @Override
         public List<AvailableAssetView> findAvailableAssetsByCategory(String category) {
